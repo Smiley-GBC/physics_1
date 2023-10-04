@@ -9,6 +9,7 @@ public class Body : MonoBehaviour
     public Vector3 vel = new Vector3(0.0f, 0.0f, 0.0f);
     public float mass = 1.0f;
     public float drag = 0.0f;
+    public float radius = 0.0f; // use this value for homework
 
     public void Simulate(Vector3 acc, float dt)
     {

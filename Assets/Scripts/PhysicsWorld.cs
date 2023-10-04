@@ -2,13 +2,26 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public class Pair
+{
+    public Body body1;
+    public Body body2;
+}
+
 public class PhysicsWorld : MonoBehaviour
 {
     public GameObject prefab;
+    public float distance = 0.0f;
 
     // Start is called before the first frame update
     void Start()
     {
+        Launch();
+    }
+
+    void Launch()
+    {
+        RemoveAll();
         for (float angle = -15.0f; angle < 15.0f; angle += 5.0f)
         {
             Body body = Add(new Vector3(0.0f, 0.5f, 0.0f), Quaternion.identity);
@@ -16,17 +29,49 @@ public class PhysicsWorld : MonoBehaviour
         }
     }
 
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Space))
+            Launch();
+    }
+
     private void FixedUpdate()
     {
         float dt = Time.fixedDeltaTime;
         Vector3 acc = Physics.gravity;
+
+        List<Pair> overlapping = new List<Pair>();
         for (int i = 0; i < bodies.Count; i++)
         {
+            // Reset all objects to green every frame
+            bodies[i].gameObject.GetComponent<Renderer>().material.color = Color.green;
+
+            for (int j = 0; j < bodies.Count; j++)
+            {
+                // Don't check the same object against itself
+                if (i == j) continue;
+
+                // Reads better if we append all overlapping pairs, then resolve later on
+                Vector3 p0 = bodies[i].transform.position;
+                Vector3 p1 = bodies[j].transform.position;
+
+                // HOMEWORK: modify this to do sphere-sphere intersection (append if collision)
+                if ((p1 - p0).magnitude < distance)
+                {
+                    Pair pair = new Pair();
+                    pair.body1 = bodies[i];
+                    pair.body2 = bodies[j];
+                    overlapping.Add(pair);
+                }
+            }
             bodies[i].Simulate(acc, dt);
         }
-        if (Time.realtimeSinceStartup > 3.0f)
+
+        // Color overlapping pairs red
+        for (int i = 0; i < overlapping.Count; i++)
         {
-            RemoveAll();
+            overlapping[i].body1.gameObject.GetComponent<Renderer>().material.color = Color.red;
+            overlapping[i].body2.gameObject.GetComponent<Renderer>().material.color = Color.red;
         }
     }
 
