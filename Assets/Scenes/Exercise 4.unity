@@ -551,8 +551,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 33ea9e9655c33ec4ba753a0b1f6cc83c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  prefab: {fileID: 15372482419040825, guid: 01b0f12b350b7264b8dda77f726cd771, type: 3}
-  distance: 1
+  spherePrefab: {fileID: 15372482419040825, guid: 01b0f12b350b7264b8dda77f726cd771, type: 3}
+  planePrefab: {fileID: 468040250448072562, guid: 09b9b0ac3eac8bc47a3e0e2ae6953b4d, type: 3}
 --- !u!1 &1230862979
 GameObject:
   m_ObjectHideFlags: 0

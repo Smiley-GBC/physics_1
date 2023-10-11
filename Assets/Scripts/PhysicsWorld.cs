@@ -8,10 +8,13 @@ public class Pair
     public Body body2;
 }
 
+// Homework option 1: Fix my cross-product/rendering issue
+// Homework option 2: Port https://github.com/Smiley98/game_concepts/blob/56_circle_plane/game/src/main.cpp to Unity in 2D or 3D
 public class PhysicsWorld : MonoBehaviour
 {
-    public GameObject prefab;
-    public float distance = 0.0f;
+    public GameObject spherePrefab;
+    public GameObject planePrefab;
+    Body plane;
 
     // Start is called before the first frame update
     void Start()
@@ -24,19 +27,27 @@ public class PhysicsWorld : MonoBehaviour
         RemoveAll();
         for (float angle = -15.0f; angle < 15.0f; angle += 5.0f)
         {
-            Body body = Add(new Vector3(0.0f, 0.5f, 0.0f), Quaternion.identity);
-            body.vel = new Vector3(angle, 10.0f, 0.0f);
+            Body body = Add(spherePrefab, new Vector3(angle, 2.5f, 0.0f), Quaternion.identity);
+            body.vel = new Vector3(0.0f, 0.0f, 0.0f);
             body.shape = new Sphere { radius = 0.5f };
             body.shape.type = ShapeType.SPHERE;
+            body.gravity = false;
 
             // Scale = diameter so our radius needs to be half the diameter
             // (Also look at the default value of sphere collider radius)
             //body.radius = body.transform.localScale.z * 0.5f;
         }
+
+        plane = Add(planePrefab, new Vector3(0.0f, 5.0f, 0.0f), Quaternion.identity);
+        plane.shape = new Plane { direction = Vector3.forward };
+        plane.shape.type = ShapeType.PLANE;
+        plane.gravity = false;
     }
 
     private void Update()
     {
+        ((Plane)plane.shape).direction = plane.transform.forward;
+
         if (Input.GetKeyDown(KeyCode.Space))
             Launch();
     }
@@ -58,14 +69,9 @@ public class PhysicsWorld : MonoBehaviour
                 if (i == j) continue;
 
                 // Reads better if we append all overlapping pairs, then resolve later on
-                //Vector3 p0 = bodies[i].transform.position;
-                //Vector3 p1 = bodies[j].transform.position;
                 Body bodyA = bodies[i];
                 Body bodyB = bodies[j];
 
-                // HOMEWORK: modify this to do sphere-sphere intersection (append if collision)
-                //if ((p1 - p0).magnitude < distance)
-                //if (bodyA.CheckCollisionSpheres(bodyB))
                 if (bodyA.CheckCollision(bodyB))
                 {
                     Pair pair = new Pair();
@@ -85,7 +91,7 @@ public class PhysicsWorld : MonoBehaviour
         }
     }
 
-    public Body Add(Vector3 position, Quaternion rotation)
+    public Body Add(GameObject prefab, Vector3 position, Quaternion rotation)
     {
         GameObject physicsObject = Instantiate(prefab, position, rotation);
         Body body = physicsObject.GetComponent<Body>();
