@@ -26,10 +26,12 @@ public class PhysicsWorld : MonoBehaviour
         {
             Body body = Add(new Vector3(0.0f, 0.5f, 0.0f), Quaternion.identity);
             body.vel = new Vector3(angle, 10.0f, 0.0f);
+            body.shape = new Sphere { radius = 0.5f };
+            body.shape.type = ShapeType.SPHERE;
 
             // Scale = diameter so our radius needs to be half the diameter
             // (Also look at the default value of sphere collider radius)
-            body.radius = body.transform.localScale.z * 0.5f;
+            //body.radius = body.transform.localScale.z * 0.5f;
         }
     }
 
@@ -63,7 +65,8 @@ public class PhysicsWorld : MonoBehaviour
 
                 // HOMEWORK: modify this to do sphere-sphere intersection (append if collision)
                 //if ((p1 - p0).magnitude < distance)
-                if (bodyA.CheckCollisionSpheres(bodyB))
+                //if (bodyA.CheckCollisionSpheres(bodyB))
+                if (bodyA.CheckCollision(bodyB))
                 {
                     Pair pair = new Pair();
                     pair.body1 = bodyA;
