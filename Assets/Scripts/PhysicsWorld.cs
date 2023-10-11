@@ -26,6 +26,10 @@ public class PhysicsWorld : MonoBehaviour
         {
             Body body = Add(new Vector3(0.0f, 0.5f, 0.0f), Quaternion.identity);
             body.vel = new Vector3(angle, 10.0f, 0.0f);
+
+            // Scale = diameter so our radius needs to be half the diameter
+            // (Also look at the default value of sphere collider radius)
+            body.radius = body.transform.localScale.z * 0.5f;
         }
     }
 
@@ -52,15 +56,18 @@ public class PhysicsWorld : MonoBehaviour
                 if (i == j) continue;
 
                 // Reads better if we append all overlapping pairs, then resolve later on
-                Vector3 p0 = bodies[i].transform.position;
-                Vector3 p1 = bodies[j].transform.position;
+                //Vector3 p0 = bodies[i].transform.position;
+                //Vector3 p1 = bodies[j].transform.position;
+                Body bodyA = bodies[i];
+                Body bodyB = bodies[j];
 
                 // HOMEWORK: modify this to do sphere-sphere intersection (append if collision)
-                if ((p1 - p0).magnitude < distance)
+                //if ((p1 - p0).magnitude < distance)
+                if (bodyA.CheckCollisionSpheres(bodyB))
                 {
                     Pair pair = new Pair();
-                    pair.body1 = bodies[i];
-                    pair.body2 = bodies[j];
+                    pair.body1 = bodyA;
+                    pair.body2 = bodyB;
                     overlapping.Add(pair);
                 }
             }

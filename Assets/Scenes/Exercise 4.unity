@@ -552,7 +552,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   prefab: {fileID: 15372482419040825, guid: 01b0f12b350b7264b8dda77f726cd771, type: 3}
-  distance: 0
+  distance: 1
 --- !u!1 &1230862979
 GameObject:
   m_ObjectHideFlags: 0
