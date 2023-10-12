@@ -22,16 +22,14 @@ public class Sphere : Shape
 
 public class Plane : Shape
 {
-    public Vector3 direction;
-    // calculate normal based on direction
-    // retrieve position from gameObject
-}
+    // Typically planes are stored in "point-normal" form, which is
+    // Vector3 position;
+    // Vector3 normal;
 
-/*struct Plane
-{
-	Vector2 position;
-	Vector2 normal;
-};*/
+    // However, we want our plane's normal and position to change with that of its gameObject.
+    // Hence, we don't actually need to store anything at all!
+    // (position = transform.position, normal = transform.up)
+}
 
 public class Body : MonoBehaviour
 {
@@ -53,7 +51,7 @@ public class Body : MonoBehaviour
 
     public bool CheckCollision(Body body)
     {
-        // Simplest test -- both objects are spheres
+        // Simplest case -- both objects are spheres
         if (shape.type == ShapeType.SPHERE && body.shape.type == ShapeType.SPHERE)
         {
             float radius0 = ((Sphere)shape).radius;
@@ -64,32 +62,19 @@ public class Body : MonoBehaviour
         // Current object is a plane, passed in object is a sphere
         if (shape.type == ShapeType.PLANE && body.shape.type == ShapeType.SPHERE)
         {
-            // 0 = current, 1 = other
-            Vector3 forward = ((Plane)shape).direction;
-
-            // Need a forward and a right vector to determine normal
-            Vector3 right = Vector3.Cross(forward, Vector3.up);
-            Vector3 up = Vector3.Cross(forward, right);
-            Vector3 normal = Vector3.Cross(right, up);
-
-            float radius1 = ((Sphere)body.shape).radius;
-            return CheckCollisionSpherePlane(body.transform.position, radius1, transform.position, normal);
+            return CheckCollisionSpherePlane(
+                body.transform.position, ((Sphere)body.shape).radius,
+                transform.position, transform.up
+            );
         }
 
         // Current object is a sphere, passed in object is a plane
         if (shape.type == ShapeType.SPHERE && body.shape.type == ShapeType.PLANE)
         {
-            // 0 = current, 1 = other
-            Vector3 forward = ((Plane)body.shape).direction;
-
-            // Need a forward and a right vector to determine normal
-            Vector3 right = Vector3.Cross(forward, Vector3.up);
-            Vector3 up = Vector3.Cross(forward, right);
-            Vector3 normal = Vector3.Cross(right, up);
-            Debug.Log(normal);
-
-            float radius1 = ((Sphere)shape).radius;
-            return CheckCollisionSpherePlane(transform.position, radius1, body.transform.position, normal);
+            return CheckCollisionSpherePlane(
+                transform.position, ((Sphere)shape).radius,
+                body.transform.position, body.transform.up
+            );
         }
 
         // Default to false otherwise (ie if both objects are planes we can't do a collision test)
@@ -106,12 +91,11 @@ public class Body : MonoBehaviour
         Vector3 spherePosition, float sphereRadius,
         Vector3 planePosition, Vector3 planeNormal)
     {
-        float distance = Vector3.Dot(planePosition - spherePosition, planeNormal);
-
-        return distance < -sphereRadius;
         // Plane-sphere intersection (homework):
         // 1. Project vector from plane to circle onto plane normal to determine distance from plane
         // 2. Point-circle collision from here -- simply compare distance to circle's radius!
-        //return false;
+
+        // (Don't actually return false. Return the outcome of the collision)
+        return false;
     }
 }

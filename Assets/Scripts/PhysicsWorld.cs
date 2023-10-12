@@ -8,8 +8,6 @@ public class Pair
     public Body body2;
 }
 
-// Homework option 1: Fix my cross-product/rendering issue
-// Homework option 2: Port https://github.com/Smiley98/game_concepts/blob/56_circle_plane/game/src/main.cpp to Unity in 2D or 3D
 public class PhysicsWorld : MonoBehaviour
 {
     public GameObject spherePrefab;
@@ -39,15 +37,12 @@ public class PhysicsWorld : MonoBehaviour
         }
 
         plane = Add(planePrefab, new Vector3(0.0f, 5.0f, 0.0f), Quaternion.identity);
-        plane.shape = new Plane { direction = Vector3.forward };
-        plane.shape.type = ShapeType.PLANE;
+        plane.shape = new Plane { type = ShapeType.PLANE };
         plane.gravity = false;
     }
 
     private void Update()
     {
-        ((Plane)plane.shape).direction = plane.transform.forward;
-
         if (Input.GetKeyDown(KeyCode.Space))
             Launch();
     }
