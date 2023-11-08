@@ -17,34 +17,40 @@ public class PhysicsWorld : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        Launch();
+        //Init6();
+        Init7();
     }
 
-    void Launch()
+    void Init6()
     {
-        RemoveAll();
         for (float angle = -15.0f; angle < 15.0f; angle += 5.0f)
         {
             Body body = Add(spherePrefab, new Vector3(angle, 2.5f, 0.0f), Quaternion.identity);
             body.vel = new Vector3(0.0f, 0.0f, 0.0f);
             body.shape = new Sphere { radius = 0.5f };
             body.shape.type = ShapeType.SPHERE;
-            body.gravity = false;
-
-            // Scale = diameter so our radius needs to be half the diameter
-            // (Also look at the default value of sphere collider radius)
-            //body.radius = body.transform.localScale.z * 0.5f;
+            body.gravityScale = 0.0f;
         }
 
         plane = Add(planePrefab, new Vector3(0.0f, 5.0f, 0.0f), Quaternion.identity);
         plane.shape = new Plane { type = ShapeType.PLANE };
-        plane.gravity = false;
+        plane.gravityScale = 0.0f;
     }
 
-    private void Update()
+    void Init7()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
-            Launch();
+        for (float angle = -15.0f; angle < 15.0f; angle += 5.0f)
+        {
+            Body body = Add(spherePrefab, new Vector3(angle, 5.0f, 0.0f), Quaternion.identity);
+            body.vel = new Vector3(0.0f, 0.0f, 0.0f);
+            body.shape = new Sphere { radius = 0.5f };
+            body.shape.type = ShapeType.SPHERE;
+            body.gravityScale = 1.0f;
+        }
+
+        plane = Add(planePrefab, Vector3.zero, Quaternion.identity);
+        plane.shape = new Plane { type = ShapeType.PLANE };
+        plane.gravityScale = 0.0f;
     }
 
     private void FixedUpdate()

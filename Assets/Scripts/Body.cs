@@ -38,14 +38,14 @@ public class Body : MonoBehaviour
     public Vector3 vel = new Vector3(0.0f, 0.0f, 0.0f);
     public float mass = 1.0f;
     public float drag = 0.0f;
-    public bool gravity = true;
+    public float gravityScale = 1.0f;
+    public bool dynamic = false;
 
     public Shape shape;
 
     public void Simulate(Vector3 acc, float dt)
     {
-        if (gravity)
-            vel = vel + acc * mass * dt;
+        vel = vel + acc * gravityScale * mass * dt;
         transform.position = transform.position + vel * dt;
     }
 
