@@ -81,17 +81,39 @@ public class Body : MonoBehaviour
         return false;
     }
 
-    public bool CheckCollisionSpheres(Vector3 position1, float radius1, Vector3 position2, float radius2)
+    public void ResolveCollision()
+    {
+
+    }
+
+    public static bool CheckCollisionSpheres(Vector3 position1, float radius1, Vector3 position2, float radius2)
     {
         float distance = (position1 - position2).magnitude;
         return distance <= radius1 + radius2;
     }
 
-    public bool CheckCollisionSpherePlane(
+    public static bool CheckCollisionSpherePlane(
         Vector3 spherePosition, float sphereRadius,
         Vector3 planePosition, Vector3 planeNormal)
     {
         float distance = Vector3.Dot(spherePosition - planePosition, planeNormal);
         return distance <= sphereRadius;
+    }
+
+    // Assumes the two spheres are colliding. Normal points from 2 to 1
+    public static void ResolveSpheres(Vector3 position1, float radius1, Vector3 position2, float radius2, out Vector3 normal, out float depth)
+    {
+        Vector3 direction = position1 - position2;
+        float distance = direction.magnitude;
+        float radiiSum = radius1 + radius2;
+        depth = radiiSum - distance;
+        normal = direction.normalized;
+    }
+
+    // Return distance of sphere projected along plane normal as penetration depth
+    public static float ResolveSpherePlane(Vector3 spherePosition, float sphereRadius,
+        Vector3 planePosition, Vector3 planeNormal)
+    {
+        return Vector3.Dot(spherePosition - planePosition, planeNormal);
     }
 }
