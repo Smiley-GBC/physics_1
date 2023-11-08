@@ -91,11 +91,7 @@ public class Body : MonoBehaviour
         Vector3 spherePosition, float sphereRadius,
         Vector3 planePosition, Vector3 planeNormal)
     {
-        // Plane-sphere intersection (homework):
-        // 1. Project vector from plane to circle onto plane normal to determine distance from plane
-        // 2. Point-circle collision from here -- simply compare distance to circle's radius!
-
-        // (Don't actually return false. Return the outcome of the collision)
-        return false;
+        float distance = Vector3.Dot(spherePosition - planePosition, planeNormal);
+        return distance <= sphereRadius;
     }
 }
