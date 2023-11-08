@@ -1,11 +1,19 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Assertions;
 
-public class Pair
+public class Mtv
+{
+    public Vector3 normal = Vector3.zero;
+    public float depth = 0.0f;
+}
+
+public class Manifold
 {
     public Body body1;
     public Body body2;
+    public Mtv mtv;
 }
 
 public class PhysicsWorld : MonoBehaviour
@@ -64,95 +72,90 @@ public class PhysicsWorld : MonoBehaviour
 
     private void FixedUpdate()
     {
+        // Resolve collisions
+        List<Manifold> collisions = DetectCollisions();
+        for (int i = 0; i < collisions.Count; i++)
+            ResolveCollision(collisions[i]);
+
+        // Set colour based on collision
+        for (int i = 0; i < bodies.Count; i++)
+            SetColor(bodies[i], Color.green);
+        collisions = DetectCollisions();
+        for (int i = 0; i < collisions.Count; i++)
+        {
+            SetColor(collisions[i].body1, Color.red);
+            SetColor(collisions[i].body2, Color.red);
+        }
+
+        // Kinematics
         float dt = Time.fixedDeltaTime;
         Vector3 acc = Physics.gravity;
-
-        List<Pair> overlapping = new List<Pair>();
         for (int i = 0; i < bodies.Count; i++)
-        {
-            // Reset all objects to green every frame
-            bodies[i].gameObject.GetComponent<Renderer>().material.color = Color.green;
-
-            for (int j = 0; j < bodies.Count; j++)
-            {
-                // Don't check the same object against itself
-                if (i == j) continue;
-
-                // Reads better if we append all overlapping pairs, then resolve later on
-                Body bodyA = bodies[i];
-                Body bodyB = bodies[j];
-
-                if (bodyA.CheckCollision(bodyB))
-                {
-                    Pair pair = new Pair();
-                    pair.body1 = bodyA;
-                    pair.body2 = bodyB;
-                    overlapping.Add(pair);
-                }
-            }
             bodies[i].Simulate(acc, dt);
-        }
-
-        // Color overlapping pairs red
-        for (int i = 0; i < overlapping.Count; i++)
-        {
-            overlapping[i].body1.gameObject.GetComponent<Renderer>().material.color = Color.red;
-            overlapping[i].body2.gameObject.GetComponent<Renderer>().material.color = Color.red;
-            ResolveCollisions(overlapping[i].body1.gameObject, overlapping[i].body2.gameObject);
-        }
     }
 
-    public void ResolveCollisions(GameObject obj1, GameObject obj2)
+    public List<Manifold> DetectCollisions()
     {
-        Vector3 position1 = obj1.transform.position;
-        Vector3 position2 = obj2.transform.position;
-        Body body1 = obj1.GetComponent<Body>();
-        Body body2 = obj2.GetComponent<Body>();
+        List<Manifold> collisions = new List<Manifold>();
+        for (int i = 0; i < bodies.Count; i++)
+        {
+            for (int j = 0; j < bodies.Count; j++)
+            {
+                if (i == j) continue; // Don't check the same object against itself
+                Body body1 = bodies[i];
+                Body body2 = bodies[j];
+                Mtv mtv = new Mtv();
+
+                if (Collision.Check(body1, body2, mtv))
+                {
+                    Manifold manifold = new Manifold();
+                    manifold.body1 = body1;
+                    manifold.body2 = body2;
+                    manifold.mtv = mtv;
+                    collisions.Add(manifold);
+                }
+            }
+        }
+        return collisions;
+    }
+
+    public void ResolveCollision(Manifold manifold)
+    {
+        Body body1 = manifold.body1;
+        Body body2 = manifold.body2;
         ShapeType shape1 = body1.shape.type;
         ShapeType shape2 = body2.shape.type;
-        float radius1 = shape1 == ShapeType.SPHERE ? ((Sphere)body1.shape).radius : 0.0f;
-        float radius2 = shape2 == ShapeType.SPHERE ? ((Sphere)body2.shape).radius : 0.0f;
 
         if (shape1 == ShapeType.SPHERE && shape2 == ShapeType.SPHERE)
         {
-            Vector3 normal = Vector3.zero;
-            float depth = 0.0f;
-            Body.ResolveSpheres(position1, radius1, position2, radius2, out normal, out depth);
-
             Vector3 mtv1 = Vector3.zero;
             Vector3 mtv2 = Vector3.zero;
             if (body1.dynamic && body2.dynamic)
             {
-                mtv1 = normal * depth * 0.5f;
-                mtv2 = -normal * depth * 0.5f;
+                mtv1 = manifold.mtv.normal * manifold.mtv.depth * 0.5f;
+                mtv2 = -manifold.mtv.normal * manifold.mtv.depth * 0.5f;
             }
             else if (body1.dynamic)
             {
-                mtv1 = normal * depth;
+                mtv1 = manifold.mtv.normal * manifold.mtv.depth;
             }
             else if (body2.dynamic)
             {
-                mtv2 = -normal * depth;
+                mtv2 = -manifold.mtv.normal * manifold.mtv.depth;
             }
 
-            obj1.transform.position += mtv1;
-            obj2.transform.position += mtv2;
+            body1.gameObject.transform.position += mtv1;
+            body2.gameObject.transform.position += mtv2;
         }
         else
         {
-            Vector3 normal = Vector3.zero;
-            float depth = 0.0f;
             if (shape1 == ShapeType.SPHERE && body1.dynamic)
             {
-                depth = Mathf.Abs(Body.ResolveSpherePlane(position1, radius1, position2, obj2.transform.up));
-                normal = obj2.transform.up;
-                obj1.transform.position += normal * Mathf.Abs(depth);
+                body1.gameObject.transform.position += manifold.mtv.normal * manifold.mtv.depth;
             }
-            if (shape2 == ShapeType.SPHERE && body2.dynamic)
+            else if (shape2 == ShapeType.SPHERE && body2.dynamic)
             {
-                depth = Mathf.Abs(Body.ResolveSpherePlane(position2, radius2, position1, obj1.transform.up));
-                normal = obj1.transform.up;
-                obj2.transform.position += normal * depth;
+                body2.gameObject.transform.position += manifold.mtv.normal * manifold.mtv.depth;
             }
         }
     }
@@ -175,6 +178,11 @@ public class PhysicsWorld : MonoBehaviour
     {
         for (int i = 0; i < bodies.Count; i++)
             Remove(bodies[i]);
+    }
+
+    void SetColor(Body body, Color color)
+    {
+        body.gameObject.GetComponent<Renderer>().material.color = color;
     }
 
     List<Body> bodies = new List<Body>();

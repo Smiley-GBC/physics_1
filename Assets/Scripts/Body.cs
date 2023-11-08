@@ -22,98 +22,23 @@ public class Sphere : Shape
 
 public class Plane : Shape
 {
-    // Typically planes are stored in "point-normal" form, which is
-    // Vector3 position;
-    // Vector3 normal;
-
-    // However, we want our plane's normal and position to change with that of its gameObject.
-    // Hence, we don't actually need to store anything at all!
-    // (position = transform.position, normal = transform.up)
+    // Vector3 position = transform.position;
+    // Vector3 normal = transform.up;
 }
 
 public class Body : MonoBehaviour
 {
-    // Using transform.position since we're deriving from MonoBehaviour!
-    //public Vector3 pos = new Vector3(0.0f, 0.0f, 0.0f);
-    public Vector3 vel = new Vector3(0.0f, 0.0f, 0.0f);
+    public Vector3 vel = Vector3.zero;
+    public Vector3 force = Vector3.zero;
     public float mass = 1.0f;
     public float drag = 0.0f;
     public float gravityScale = 1.0f;
     public bool dynamic = false;
-
     public Shape shape;
 
     public void Simulate(Vector3 acc, float dt)
     {
         vel = vel + acc * gravityScale * mass * dt;
         transform.position = transform.position + vel * dt;
-    }
-
-    public bool CheckCollision(Body body)
-    {
-        // Simplest case -- both objects are spheres
-        if (shape.type == ShapeType.SPHERE && body.shape.type == ShapeType.SPHERE)
-        {
-            float radius0 = ((Sphere)shape).radius;
-            float radius1 = ((Sphere)body.shape).radius;
-            return CheckCollisionSpheres(transform.position, radius0, body.transform.position, radius1);
-        }
-
-        // Current object is a plane, passed in object is a sphere
-        if (shape.type == ShapeType.PLANE && body.shape.type == ShapeType.SPHERE)
-        {
-            return CheckCollisionSpherePlane(
-                body.transform.position, ((Sphere)body.shape).radius,
-                transform.position, transform.up
-            );
-        }
-
-        // Current object is a sphere, passed in object is a plane
-        if (shape.type == ShapeType.SPHERE && body.shape.type == ShapeType.PLANE)
-        {
-            return CheckCollisionSpherePlane(
-                transform.position, ((Sphere)shape).radius,
-                body.transform.position, body.transform.up
-            );
-        }
-
-        // Default to false otherwise (ie if both objects are planes we can't do a collision test)
-        return false;
-    }
-
-    public void ResolveCollision()
-    {
-
-    }
-
-    public static bool CheckCollisionSpheres(Vector3 position1, float radius1, Vector3 position2, float radius2)
-    {
-        float distance = (position1 - position2).magnitude;
-        return distance <= radius1 + radius2;
-    }
-
-    public static bool CheckCollisionSpherePlane(
-        Vector3 spherePosition, float sphereRadius,
-        Vector3 planePosition, Vector3 planeNormal)
-    {
-        float distance = Vector3.Dot(spherePosition - planePosition, planeNormal);
-        return distance <= sphereRadius;
-    }
-
-    // Assumes the two spheres are colliding. Normal points from 2 to 1
-    public static void ResolveSpheres(Vector3 position1, float radius1, Vector3 position2, float radius2, out Vector3 normal, out float depth)
-    {
-        Vector3 direction = position1 - position2;
-        float distance = direction.magnitude;
-        float radiiSum = radius1 + radius2;
-        depth = radiiSum - distance;
-        normal = direction.normalized;
-    }
-
-    // Return distance of sphere projected along plane normal as penetration depth
-    public static float ResolveSpherePlane(Vector3 spherePosition, float sphereRadius,
-        Vector3 planePosition, Vector3 planeNormal)
-    {
-        return Vector3.Dot(spherePosition - planePosition, planeNormal);
     }
 }
