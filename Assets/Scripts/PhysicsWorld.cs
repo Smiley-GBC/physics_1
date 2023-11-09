@@ -25,29 +25,11 @@ public class PhysicsWorld : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        //Init6();
         Init7();
-    }
-
-    void Init6()
-    {
-        for (float angle = -15.0f; angle < 15.0f; angle += 5.0f)
-        {
-            Body body = Add(spherePrefab, new Vector3(angle, 2.5f, 0.0f), Quaternion.identity);
-            body.vel = new Vector3(0.0f, 0.0f, 0.0f);
-            body.shape = new Sphere { radius = 0.5f };
-            body.shape.type = ShapeType.SPHERE;
-            body.gravityScale = 0.0f;
-        }
-
-        plane = Add(planePrefab, new Vector3(0.0f, 5.0f, 0.0f), Quaternion.identity);
-        plane.shape = new Plane { type = ShapeType.PLANE };
-        plane.gravityScale = 0.0f;
     }
 
     void Init7()
     {
-        ///*
         for (float angle = -15.0f; angle < 15.0f; angle += 5.0f)
         {
             Body body = Add(spherePrefab, new Vector3(angle, 5.0f, 0.0f), Quaternion.identity);
@@ -56,17 +38,9 @@ public class PhysicsWorld : MonoBehaviour
             body.shape.type = ShapeType.SPHERE;
             body.gravityScale = 0.1f;
             body.dynamic = true;
-        }//*/
+        }
 
-        /*
-        Body body = Add(spherePrefab, new Vector3(0.0f, 5.0f, 0.0f), Quaternion.identity);
-        body.vel = new Vector3(0.0f, 0.0f, 0.0f);
-        body.shape = new Sphere { radius = 0.5f };
-        body.shape.type = ShapeType.SPHERE;
-        body.gravityScale = 0.1f;
-        body.dynamic = true;//*/
-
-        plane = Add(planePrefab, Vector3.zero, Quaternion.identity);
+        plane = Add(planePrefab, Vector3.zero, Quaternion.Euler(0.0f, 0.0f, 0.0f));
         plane.shape = new Plane { type = ShapeType.PLANE };
         plane.gravityScale = 0.0f;
         plane.dynamic = false;
@@ -74,6 +48,10 @@ public class PhysicsWorld : MonoBehaviour
 
     private void FixedUpdate()
     {
+        // Forces
+        for (int i = 0; i < bodies.Count; i++)
+            bodies[i].ApplyGravity(Physics.gravity);
+
         // Resolve collisions
         List<Manifold> collisions = DetectCollisions();
         for (int i = 0; i < collisions.Count; i++)
@@ -86,7 +64,7 @@ public class PhysicsWorld : MonoBehaviour
 
         // Kinematics
         for (int i = 0; i < bodies.Count; i++)
-            bodies[i].Simulate(Physics.gravity, Time.fixedDeltaTime);
+            bodies[i].Simulate(Time.fixedDeltaTime);
     }
 
     public List<Manifold> DetectCollisions()
@@ -144,14 +122,20 @@ public class PhysicsWorld : MonoBehaviour
         }
         else
         {
+            // TODO -- apply enough normal force to counter-act the velocity
+            // if done correctly, we won't need to manually translate the position by normal * depth
             float depth = Mathf.Abs(manifold.mtv.depth);
             Vector3 normal = manifold.mtv.normal;
             if (shape1 == ShapeType.SPHERE && body1.dynamic)
             {
+                Vector3 normalForce = Vector3.Reflect(body1.force, normal);
+                body1.force += normalForce;
                 body1.gameObject.transform.position += normal * depth;
             }
             else if (shape2 == ShapeType.SPHERE && body2.dynamic)
             {
+                Vector3 normalForce = Vector3.Reflect(body2.force, normal);
+                body2.force += normalForce;
                 body2.gameObject.transform.position += normal * depth;
             }
         }

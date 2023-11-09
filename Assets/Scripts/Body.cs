@@ -37,10 +37,15 @@ public class Body : MonoBehaviour
     public bool colliding = false;  // internal
     public Shape shape;
 
-    public void Simulate(Vector3 gravity, float dt)
+    public void ApplyGravity(Vector3 gravity)
     {
         force += gravity * gravityScale * mass;
+    }
+
+    public void Simulate(float dt)
+    {
         vel += (force / mass) * dt;
         transform.position += vel * dt;
+        force = Vector3.zero;
     }
 }
