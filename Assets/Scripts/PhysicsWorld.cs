@@ -47,6 +47,7 @@ public class PhysicsWorld : MonoBehaviour
 
     void Init7()
     {
+        ///*
         for (float angle = -15.0f; angle < 15.0f; angle += 5.0f)
         {
             Body body = Add(spherePrefab, new Vector3(angle, 5.0f, 0.0f), Quaternion.identity);
@@ -55,16 +56,17 @@ public class PhysicsWorld : MonoBehaviour
             body.shape.type = ShapeType.SPHERE;
             body.gravityScale = 0.1f;
             body.dynamic = true;
-        }
+        }//*/
 
-        //Body body = Add(spherePrefab, new Vector3(0.0f, 5.0f, 0.0f), Quaternion.identity);
-        //body.vel = new Vector3(0.0f, 0.0f, 0.0f);
-        //body.shape = new Sphere { radius = 0.5f };
-        //body.shape.type = ShapeType.SPHERE;
-        //body.gravityScale = 0.1f;
-        //body.dynamic = true;
+        /*
+        Body body = Add(spherePrefab, new Vector3(0.0f, 5.0f, 0.0f), Quaternion.identity);
+        body.vel = new Vector3(0.0f, 0.0f, 0.0f);
+        body.shape = new Sphere { radius = 0.5f };
+        body.shape.type = ShapeType.SPHERE;
+        body.gravityScale = 0.1f;
+        body.dynamic = true;//*/
 
-        plane = Add(planePrefab, Vector3.zero, Quaternion.Euler(0.0f, 0.0f, 45.0f));
+        plane = Add(planePrefab, Vector3.zero, Quaternion.identity);
         plane.shape = new Plane { type = ShapeType.PLANE };
         plane.gravityScale = 0.0f;
         plane.dynamic = false;
@@ -77,21 +79,14 @@ public class PhysicsWorld : MonoBehaviour
         for (int i = 0; i < collisions.Count; i++)
             ResolveCollision(collisions[i]);
 
-        // Set colour based on collision
+        // Render
+        DetectCollisions();
         for (int i = 0; i < bodies.Count; i++)
-            SetColor(bodies[i], Color.green);
-        collisions = DetectCollisions();
-        for (int i = 0; i < collisions.Count; i++)
-        {
-            SetColor(collisions[i].body1, Color.red);
-            SetColor(collisions[i].body2, Color.red);
-        }
+            SetColor(bodies[i], bodies[i].colliding ? Color.red : Color.green);
 
         // Kinematics
-        float dt = Time.fixedDeltaTime;
-        Vector3 acc = Physics.gravity;
         for (int i = 0; i < bodies.Count; i++)
-            bodies[i].Simulate(acc, dt);
+            bodies[i].Simulate(Physics.gravity, Time.fixedDeltaTime);
     }
 
     public List<Manifold> DetectCollisions()
@@ -99,14 +94,13 @@ public class PhysicsWorld : MonoBehaviour
         List<Manifold> collisions = new List<Manifold>();
         for (int i = 0; i < bodies.Count; i++)
         {
-            for (int j = 0; j < bodies.Count; j++)
+            for (int j = i; j < bodies.Count; j++)
             {
-                if (i == j) continue; // Don't check the same object against itself
+                Mtv mtv = new Mtv();
                 Body body1 = bodies[i];
                 Body body2 = bodies[j];
-                Mtv mtv = new Mtv();
-
-                if (Collision.Check(body1, body2, mtv))
+                bool colliding = Collision.Check(body1, body2, mtv);
+                if (colliding)
                 {
                     Manifold manifold = new Manifold();
                     manifold.body1 = body1;
@@ -114,6 +108,7 @@ public class PhysicsWorld : MonoBehaviour
                     manifold.mtv = mtv;
                     collisions.Add(manifold);
                 }
+                body1.colliding = body2.colliding = colliding;
             }
         }
         return collisions;
@@ -149,13 +144,15 @@ public class PhysicsWorld : MonoBehaviour
         }
         else
         {
+            float depth = Mathf.Abs(manifold.mtv.depth);
+            Vector3 normal = manifold.mtv.normal;
             if (shape1 == ShapeType.SPHERE && body1.dynamic)
             {
-                body1.gameObject.transform.position += manifold.mtv.normal * manifold.mtv.depth;
+                body1.gameObject.transform.position += normal * depth;
             }
             else if (shape2 == ShapeType.SPHERE && body2.dynamic)
             {
-                body2.gameObject.transform.position += manifold.mtv.normal * manifold.mtv.depth;
+                body2.gameObject.transform.position += normal * depth;
             }
         }
     }

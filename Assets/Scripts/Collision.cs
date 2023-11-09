@@ -58,7 +58,7 @@ public class Collision
         if (collision && mtv != null)
         {
             mtv.normal = planeNormal;
-            mtv.depth = distance;
+            mtv.depth = sphereRadius - distance;
         }
         return collision;
     }
