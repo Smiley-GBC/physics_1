@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Assertions;
 
 public class Mtv
 {
@@ -11,9 +10,9 @@ public class Mtv
 
 public class Manifold
 {
-    public Body body1;
-    public Body body2;
-    public Mtv mtv;
+    public Body body1 = null;
+    public Body body2 = null;
+    public Mtv mtv = null;
 }
 
 public class PhysicsWorld : MonoBehaviour

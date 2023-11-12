@@ -1,7 +1,5 @@
-using JetBrains.Annotations;
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public enum ShapeType
@@ -100,9 +98,14 @@ public class Body : MonoBehaviour
 
     public void Integrate(float dt)
     {
-        Vector3 acc = force * inverseMass;
-        velocity += acc * dt;
-        transform.position += velocity * damping * dt + 0.5f * acc * dt * dt;
-        force = Vector3.zero;
+        // No point in integrating static objects
+        if (Dynamic())
+        {
+            Vector3 acc = force * inverseMass;
+            velocity += acc * dt;
+            velocity *= Mathf.Pow(damping, dt);
+            transform.position += velocity * damping * dt;
+            force = Vector3.zero;
+        }
     }
 }
