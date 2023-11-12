@@ -29,14 +29,28 @@ public class Plane : Shape
 public class Body : MonoBehaviour
 {
     private Vector3 force = Vector3.zero;
-    private Vector3 vel = Vector3.zero;
-    private float invMass = 1.0f;
+    private Vector3 velocity = Vector3.zero;
+    private float inverseMass = 1.0f;
 
     public float damping = 1.0f;
     public float gravityScale = 1.0f;
-    public bool dynamic = false;
     public bool colliding = false;  // internal
     public Shape shape;
+
+    public void SetMass(float mass)
+    {
+        inverseMass = 1.0f / mass;
+    }
+
+    public void SetInfiniteMass()
+    {
+        inverseMass = 0.0f;
+    }
+
+    public bool Dynamic()
+    {
+        return inverseMass > 0.0f;
+    }
 
     public Vector3 Force()
     {
@@ -45,12 +59,7 @@ public class Body : MonoBehaviour
 
     public Vector3 Velocity()
     {
-        return vel;
-    }
-
-    public float Mass()
-    {
-        return 1.0f / invMass;
+        return velocity;
     }
 
     public void ResetForce()
@@ -60,12 +69,7 @@ public class Body : MonoBehaviour
 
     public void ResetVelocity()
     {
-        vel = Vector3.zero;
-    }
-
-    public void ResetMass()
-    {
-        invMass = 1.0f;
+        velocity = Vector3.zero;
     }
 
     public void AddForce(Vector3 force)
@@ -75,34 +79,51 @@ public class Body : MonoBehaviour
 
     public void AddAcceleration(Vector3 acceleration)
     {
-        force += acceleration * invMass;
+        force += acceleration * inverseMass;
     }
 
     public void AddImpulse(Vector3 impulse)
     {
-        vel += impulse * invMass;
+        velocity += impulse * inverseMass;
     }
 
     public void AddVelocity(Vector3 velocity)
     {
-        vel += velocity;
+        this.velocity += velocity;
     }
 
-    public void SetMass(float mass)
+    public void AddNormalForce(Vector3 normal, float depth)
     {
-        invMass = 1.0f / mass;
+        // Unsure how to correct velocity;
+        // Normal force counteracts one frame worth of gravitational force,
+        // but not enough to couneract velocity (accumulated gravitational acceleration)...
+        AddForce(Vector3.Reflect(force, normal));
+        transform.position += normal * depth;
+        // 1. Spheres accumulate acceleration
+        // 2. Spheres collide with plane
+        // 3. Normal force applied
+        // 4. MTV applied
+        // 5. Integration -- downwards velocity pushes spheres below plane
+
+        // Fix: delay position resolution until after dynamics integration;
+        // 1. Detect collisions and apply collision forces (normal & friction)
+        // 2. Integrate
+        // 3. Detection collisions again.
+        // 4. Resolve positions
     }
 
     public void ApplyGravity(Vector3 gravity)
     {
-        force += gravity * gravityScale / invMass;
+        // Can't apply gravity to masses of zero (divide by zero error)
+        if (Dynamic())
+            force += gravity * gravityScale / inverseMass;
     }
 
     public void Integrate(float dt)
     {
-        Vector3 acc = force * invMass;
-        vel += acc * dt;
-        transform.position += vel * damping * dt + 0.5f * acc * dt * dt;
+        Vector3 acc = force * inverseMass;
+        velocity += acc * dt;
+        transform.position += velocity * damping * dt + 0.5f * acc * dt * dt;
         force = Vector3.zero;
     }
 }

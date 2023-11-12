@@ -35,13 +35,11 @@ public class PhysicsWorld : MonoBehaviour
             Body body = Add(spherePrefab, new Vector3(angle, 5.0f, 0.0f), Quaternion.identity);
             body.shape = new Sphere { radius = 0.5f };
             body.shape.type = ShapeType.SPHERE;
-            body.dynamic = true;
         }
 
         plane = Add(planePrefab, Vector3.zero, Quaternion.Euler(0.0f, 0.0f, 0.0f));
         plane.shape = new Plane { type = ShapeType.PLANE };
-        plane.gravityScale = 0.0f;
-        plane.dynamic = false;
+        plane.SetInfiniteMass();
     }
 
     private void FixedUpdate()
@@ -101,16 +99,16 @@ public class PhysicsWorld : MonoBehaviour
         {
             Vector3 mtv1 = Vector3.zero;
             Vector3 mtv2 = Vector3.zero;
-            if (body1.dynamic && body2.dynamic)
+            if (body1.Dynamic() && body2.Dynamic())
             {
                 mtv1 = manifold.mtv.normal * manifold.mtv.depth * 0.5f;
                 mtv2 = -manifold.mtv.normal * manifold.mtv.depth * 0.5f;
             }
-            else if (body1.dynamic)
+            else if (body1.Dynamic())
             {
                 mtv1 = manifold.mtv.normal * manifold.mtv.depth;
             }
-            else if (body2.dynamic)
+            else if (body2.Dynamic())
             {
                 mtv2 = -manifold.mtv.normal * manifold.mtv.depth;
             }
@@ -120,22 +118,11 @@ public class PhysicsWorld : MonoBehaviour
         }
         else
         {
-            // TODO -- apply enough normal force to counter-act the velocity
-            // if done correctly, we won't need to manually translate the position by normal * depth
             float depth = Mathf.Abs(manifold.mtv.depth);
             Vector3 normal = manifold.mtv.normal;
-            if (shape1 == ShapeType.SPHERE && body1.dynamic)
-            {
-                Vector3 normalForce = Vector3.Reflect(body1.Force(), normal);
-                body1.AddForce(normalForce);
-                body1.gameObject.transform.position += normal * depth;
-            }
-            else if (shape2 == ShapeType.SPHERE && body2.dynamic)
-            {
-                Vector3 normalForce = Vector3.Reflect(body2.Force(), normal);
-                body2.AddForce(normalForce);
-                body2.gameObject.transform.position += normal * depth;
-            }
+            Body body = shape1 == ShapeType.SPHERE ? body1 : body2;
+            if (body.Dynamic())
+                body.AddNormalForce(normal, depth);
         }
     }
 
