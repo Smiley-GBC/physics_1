@@ -48,82 +48,22 @@ public class PhysicsWorld : MonoBehaviour
         for (int i = 0; i < bodies.Count; i++)
             bodies[i].ApplyGravity(Physics.gravity);
 
-        // Resolve collisions
-        List<Manifold> collisions = DetectCollisions();
+        // Apply collision forces
+        List<Manifold> collisions = Collision.DetectCollisions(bodies);
         for (int i = 0; i < collisions.Count; i++)
-            ResolveCollision(collisions[i]);
+            Collision.ResolveDynamics(collisions[i]);
 
-        // Render
-        DetectCollisions();
-        for (int i = 0; i < bodies.Count; i++)
-            SetColor(bodies[i], bodies[i].colliding ? Color.red : Color.green);
-
-        // Kinematics
+        // Update positions & velocities (integration)
         for (int i = 0; i < bodies.Count; i++)
             bodies[i].Integrate(Time.fixedDeltaTime);
-    }
 
-    public List<Manifold> DetectCollisions()
-    {
-        List<Manifold> collisions = new List<Manifold>();
-        for (int i = 0; i < bodies.Count; i++)
-        {
-            for (int j = i; j < bodies.Count; j++)
-            {
-                Mtv mtv = new Mtv();
-                Body body1 = bodies[i];
-                Body body2 = bodies[j];
-                bool colliding = Collision.Check(body1, body2, mtv);
-                if (colliding)
-                {
-                    Manifold manifold = new Manifold();
-                    manifold.body1 = body1;
-                    manifold.body2 = body2;
-                    manifold.mtv = mtv;
-                    collisions.Add(manifold);
-                }
-                body1.colliding = body2.colliding = colliding;
-            }
-        }
-        return collisions;
-    }
+        // Resolve positions
+        collisions = Collision.DetectCollisions(bodies);
+        for (int i = 0; i < collisions.Count; i++)
+            Collision.ResolvePenetration(collisions[i]);
 
-    public void ResolveCollision(Manifold manifold)
-    {
-        Body body1 = manifold.body1;
-        Body body2 = manifold.body2;
-        ShapeType shape1 = body1.shape.type;
-        ShapeType shape2 = body2.shape.type;
-
-        if (shape1 == ShapeType.SPHERE && shape2 == ShapeType.SPHERE)
-        {
-            Vector3 mtv1 = Vector3.zero;
-            Vector3 mtv2 = Vector3.zero;
-            if (body1.Dynamic() && body2.Dynamic())
-            {
-                mtv1 = manifold.mtv.normal * manifold.mtv.depth * 0.5f;
-                mtv2 = -manifold.mtv.normal * manifold.mtv.depth * 0.5f;
-            }
-            else if (body1.Dynamic())
-            {
-                mtv1 = manifold.mtv.normal * manifold.mtv.depth;
-            }
-            else if (body2.Dynamic())
-            {
-                mtv2 = -manifold.mtv.normal * manifold.mtv.depth;
-            }
-
-            body1.gameObject.transform.position += mtv1;
-            body2.gameObject.transform.position += mtv2;
-        }
-        else
-        {
-            float depth = Mathf.Abs(manifold.mtv.depth);
-            Vector3 normal = manifold.mtv.normal;
-            Body body = shape1 == ShapeType.SPHERE ? body1 : body2;
-            if (body.Dynamic())
-                body.AddNormalForce(normal, depth);
-        }
+        // Render
+        SetColors();
     }
 
     public Body Add(GameObject prefab, Vector3 position, Quaternion rotation)
@@ -146,9 +86,23 @@ public class PhysicsWorld : MonoBehaviour
             Remove(bodies[i]);
     }
 
-    void SetColor(Body body, Color color)
+    void SetColors()
     {
-        body.gameObject.GetComponent<Renderer>().material.color = color;
+        List<bool> collisions = new List<bool>(new bool[bodies.Count]);
+
+        for (int i = 0; i < bodies.Count; i++)
+        {
+            for (int j = i + 1; j < bodies.Count; j++)
+            {
+                collisions[i] |= collisions[j] |= Collision.Check(bodies[i], bodies[j]);
+            }
+        }
+
+        for (int i = 0; i < collisions.Count; i++)
+        {
+            Color color = collisions[i] ? Color.red : Color.green;
+            bodies[i].GetComponent<Renderer>().material.color = color;
+        }
     }
 
     List<Body> bodies = new List<Body>();

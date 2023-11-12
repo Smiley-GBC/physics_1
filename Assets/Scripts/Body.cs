@@ -32,10 +32,9 @@ public class Body : MonoBehaviour
     private Vector3 velocity = Vector3.zero;
     private float inverseMass = 1.0f;
 
+    public Shape shape;
     public float damping = 1.0f;
     public float gravityScale = 1.0f;
-    public bool colliding = false;  // internal
-    public Shape shape;
 
     public void SetMass(float mass)
     {
@@ -90,26 +89,6 @@ public class Body : MonoBehaviour
     public void AddVelocity(Vector3 velocity)
     {
         this.velocity += velocity;
-    }
-
-    public void AddNormalForce(Vector3 normal, float depth)
-    {
-        // Unsure how to correct velocity;
-        // Normal force counteracts one frame worth of gravitational force,
-        // but not enough to couneract velocity (accumulated gravitational acceleration)...
-        AddForce(Vector3.Reflect(force, normal));
-        transform.position += normal * depth;
-        // 1. Spheres accumulate acceleration
-        // 2. Spheres collide with plane
-        // 3. Normal force applied
-        // 4. MTV applied
-        // 5. Integration -- downwards velocity pushes spheres below plane
-
-        // Fix: delay position resolution until after dynamics integration;
-        // 1. Detect collisions and apply collision forces (normal & friction)
-        // 2. Integrate
-        // 3. Detection collisions again.
-        // 4. Resolve positions
     }
 
     public void ApplyGravity(Vector3 gravity)
