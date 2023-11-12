@@ -28,24 +28,81 @@ public class Plane : Shape
 
 public class Body : MonoBehaviour
 {
-    public Vector3 force = Vector3.zero;
-    public Vector3 vel = Vector3.zero;
-    public float mass = 1.0f;
-    public float drag = 0.0f;
+    private Vector3 force = Vector3.zero;
+    private Vector3 vel = Vector3.zero;
+    private float invMass = 1.0f;
+
+    public float damping = 1.0f;
     public float gravityScale = 1.0f;
     public bool dynamic = false;
     public bool colliding = false;  // internal
     public Shape shape;
 
-    public void ApplyGravity(Vector3 gravity)
+    public Vector3 Force()
     {
-        force += gravity * gravityScale * mass;
+        return force;
     }
 
-    public void Simulate(float dt)
+    public Vector3 Velocity()
     {
-        vel += (force / mass) * dt;
-        transform.position += vel * dt;
+        return vel;
+    }
+
+    public float Mass()
+    {
+        return 1.0f / invMass;
+    }
+
+    public void ResetForce()
+    {
+        force = Vector3.zero;
+    }
+
+    public void ResetVelocity()
+    {
+        vel = Vector3.zero;
+    }
+
+    public void ResetMass()
+    {
+        invMass = 1.0f;
+    }
+
+    public void AddForce(Vector3 force)
+    {
+        this.force += force;
+    }
+
+    public void AddAcceleration(Vector3 acceleration)
+    {
+        force += acceleration * invMass;
+    }
+
+    public void AddImpulse(Vector3 impulse)
+    {
+        vel += impulse * invMass;
+    }
+
+    public void AddVelocity(Vector3 velocity)
+    {
+        vel += velocity;
+    }
+
+    public void SetMass(float mass)
+    {
+        invMass = 1.0f / mass;
+    }
+
+    public void ApplyGravity(Vector3 gravity)
+    {
+        force += gravity * gravityScale / invMass;
+    }
+
+    public void Integrate(float dt)
+    {
+        Vector3 acc = force * invMass;
+        vel += acc * dt;
+        transform.position += vel * damping * dt + 0.5f * acc * dt * dt;
         force = Vector3.zero;
     }
 }

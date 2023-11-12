@@ -33,10 +33,8 @@ public class PhysicsWorld : MonoBehaviour
         for (float angle = -15.0f; angle < 15.0f; angle += 5.0f)
         {
             Body body = Add(spherePrefab, new Vector3(angle, 5.0f, 0.0f), Quaternion.identity);
-            body.vel = new Vector3(0.0f, 0.0f, 0.0f);
             body.shape = new Sphere { radius = 0.5f };
             body.shape.type = ShapeType.SPHERE;
-            body.gravityScale = 0.1f;
             body.dynamic = true;
         }
 
@@ -64,7 +62,7 @@ public class PhysicsWorld : MonoBehaviour
 
         // Kinematics
         for (int i = 0; i < bodies.Count; i++)
-            bodies[i].Simulate(Time.fixedDeltaTime);
+            bodies[i].Integrate(Time.fixedDeltaTime);
     }
 
     public List<Manifold> DetectCollisions()
@@ -128,14 +126,14 @@ public class PhysicsWorld : MonoBehaviour
             Vector3 normal = manifold.mtv.normal;
             if (shape1 == ShapeType.SPHERE && body1.dynamic)
             {
-                Vector3 normalForce = Vector3.Reflect(body1.force, normal);
-                body1.force += normalForce;
+                Vector3 normalForce = Vector3.Reflect(body1.Force(), normal);
+                body1.AddForce(normalForce);
                 body1.gameObject.transform.position += normal * depth;
             }
             else if (shape2 == ShapeType.SPHERE && body2.dynamic)
             {
-                Vector3 normalForce = Vector3.Reflect(body2.force, normal);
-                body2.force += normalForce;
+                Vector3 normalForce = Vector3.Reflect(body2.Force(), normal);
+                body2.AddForce(normalForce);
                 body2.gameObject.transform.position += normal * depth;
             }
         }
