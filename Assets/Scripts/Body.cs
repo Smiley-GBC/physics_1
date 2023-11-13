@@ -35,6 +35,11 @@ public class Body : MonoBehaviour
     public float gravityScale = 1.0f;
     public float restitution = 1.0f;
 
+    public bool Dynamic()
+    {
+        return inverseMass > 0.0f;
+    }
+
     public float InverseMass()
     {
         return Dynamic() ? inverseMass : 0.0f;
@@ -48,11 +53,6 @@ public class Body : MonoBehaviour
     public void SetInfiniteMass()
     {
         inverseMass = 0.0f;
-    }
-
-    public bool Dynamic()
-    {
-        return inverseMass > 0.0f;
     }
 
     public Vector3 Force()

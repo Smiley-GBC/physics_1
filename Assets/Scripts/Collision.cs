@@ -90,7 +90,6 @@ public class Collision
         return collisions;
     }
 
-    /*
     public static void ResolveDynamics(Manifold manifold)
     {
         if (manifold.body2 != null)
@@ -102,7 +101,7 @@ public class Collision
         {
             manifold.body1.AddForce(manifold.mtv.normal * manifold.body1.Force().magnitude);
         }
-    }//*/
+    }
 
     public static void ResolvePenetration(Manifold manifold)
     {
@@ -124,30 +123,5 @@ public class Collision
         if (manifold.body2 != null)
             relativeVelocity -= manifold.body2.Velocity();
         return Vector3.Dot(relativeVelocity, manifold.mtv.normal);
-    }
-
-    public static void ResolveDynamics(Manifold manifold)
-    {
-        // Exit early if objects are separating or stationary
-        float separationVelocity = SeparationVelocity(manifold);
-        if (separationVelocity > 0.0f) return;
-
-        float e = manifold.body2 == null ?
-            manifold.body1.restitution : Mathf.Min(manifold.body1.restitution, manifold.body2.restitution);
-        float reboundVelocity = -separationVelocity * e;
-        float deltaVelocity = reboundVelocity - separationVelocity;
-
-        float totalInverseMass = manifold.body1.InverseMass();
-        if (manifold.body2 != null)
-            totalInverseMass += manifold.body2.InverseMass();
-
-        // Will probably never happen, but can't resolve two static objects
-        // (Impulse on two objects each with infinite masses has no effect).
-        if (totalInverseMass <= 0.0f) return;
-
-        Vector3 impulse = manifold.mtv.normal * (deltaVelocity / totalInverseMass);
-        manifold.body1.AddVelocity(impulse * manifold.body1.InverseMass());
-        if (manifold.body2 != null)
-            manifold.body2.AddVelocity(impulse * manifold.body2.InverseMass());
     }
 }
