@@ -29,12 +29,25 @@ public class PhysicsWorld : MonoBehaviour
 
     void Init7()
     {
-        for (float angle = -15.0f; angle < 15.0f; angle += 5.0f)
-        {
-            Body body = Add(spherePrefab, new Vector3(angle, 5.0f, 0.0f), Quaternion.identity);
-            body.shape = new Sphere { radius = 0.5f };
-            body.shape.type = ShapeType.SPHERE;
-        }
+        //for (float angle = -15.0f; angle < 15.0f; angle += 5.0f)
+        //{
+        //    Body body = Add(spherePrefab, new Vector3(angle, 5.0f, 0.0f), Quaternion.identity);
+        //    body.shape = new Sphere { radius = 0.5f };
+        //    body.shape.type = ShapeType.SPHERE;
+        //}
+
+        Body body1 = Add(spherePrefab, new Vector3(-5.0f, 0.0f, 0.0f), Quaternion.identity);
+        Body body2 = Add(spherePrefab, new Vector3(5.0f, 0.0f, 0.0f), Quaternion.identity);
+        body1.shape = new Sphere { radius = 0.5f };
+        body2.shape = new Sphere { radius = 0.5f };
+        body1.shape.type = ShapeType.SPHERE;
+        body2.shape.type = ShapeType.SPHERE;
+        body1.gravityScale = 0.0f;
+        body2.gravityScale = 0.0f;
+        body1.restitution = 0.5f;
+        body2.restitution = 0.5f;
+        body1.AddVelocity(Vector3.right * 2.0f);
+        body2.AddVelocity(Vector3.left * 2.0f);
 
         plane = Add(planePrefab, Vector3.zero, Quaternion.Euler(0.0f, 0.0f, 0.0f));
         plane.shape = new Plane { type = ShapeType.PLANE };

@@ -148,6 +148,6 @@ public class Collision
         Vector3 impulse = manifold.mtv.normal * (deltaVelocity / totalInverseMass);
         manifold.body1.AddVelocity(impulse * manifold.body1.InverseMass());
         if (manifold.body2 != null)
-            manifold.body2.AddVelocity(impulse * manifold.body2.InverseMass());
+            manifold.body2.AddVelocity(-impulse * manifold.body2.InverseMass());
     }
 }
