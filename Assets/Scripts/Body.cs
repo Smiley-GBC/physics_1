@@ -33,6 +33,12 @@ public class Body : MonoBehaviour
     public Shape shape;
     public float damping = 1.0f;
     public float gravityScale = 1.0f;
+    public float restitution = 1.0f;
+
+    public float InverseMass()
+    {
+        return Dynamic() ? inverseMass : 0.0f;
+    }
 
     public void SetMass(float mass)
     {
@@ -54,19 +60,39 @@ public class Body : MonoBehaviour
         return force;
     }
 
+    public Vector3 Acceleration()
+    {
+        return force * inverseMass;
+    }
+
+    public Vector3 Impulse()
+    {
+        return velocity * inverseMass;
+    }
+
     public Vector3 Velocity()
     {
         return velocity;
     }
 
-    public void ResetForce()
+    public void SetForce(Vector3 force)
     {
-        force = Vector3.zero;
+        this.force = force;
     }
 
-    public void ResetVelocity()
+    public void SetAcceleration(Vector3 acceleration)
     {
-        velocity = Vector3.zero;
+        force = acceleration * inverseMass;
+    }
+
+    public void SetImpulse(Vector3 impulse)
+    {
+        velocity = impulse * inverseMass;
+    }
+
+    public void SetVelocity(Vector3 velocity)
+    {
+        this.velocity = velocity;
     }
 
     public void AddForce(Vector3 force)
