@@ -2,8 +2,22 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public class Mtv
+{
+    public Vector3 normal = Vector3.zero;
+    public float depth = 0.0f;
+}
+
+public class Manifold
+{
+    public Body body1 = null;
+    public Body body2 = null;
+    public Mtv mtv = null;
+}
+
 public class Collision
 {
+    // MTV resolves 1 from 2 (resolves left from right)
     public static bool Check(Body body1, Body body2, Mtv mtv = null)
     {
         if (body1.shape.type == ShapeType.SPHERE && body2.shape.type == ShapeType.SPHERE)
@@ -36,7 +50,7 @@ public class Collision
         return false;
     }
 
-    public static bool SphereSphere(Vector3 position1, float radius1, Vector3 position2, float radius2, Mtv mtv)
+    public static bool SphereSphere(Vector3 position1, float radius1, Vector3 position2, float radius2, Mtv mtv = null)
     {
         Vector3 direction = position1 - position2;
         float distance = direction.magnitude;
