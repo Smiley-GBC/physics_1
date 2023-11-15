@@ -28,11 +28,21 @@ public class PhysicsWorld : MonoBehaviour
         plane.SetInfiniteMass();
     }
 
+    private void Update()
+    {
+        //Simulate(Physics.gravity, Time.deltaTime);
+    }
+
     private void FixedUpdate()
+    {
+        Simulate(Physics.gravity, Time.fixedDeltaTime);
+    }
+
+    void Simulate(Vector3 gravity, float dt)
     {
         // Forces
         for (int i = 0; i < bodies.Count; i++)
-            bodies[i].ApplyGravity(Physics.gravity);
+            bodies[i].ApplyGravity(gravity);
 
         // Apply collision forces
         List<Manifold> collisions = Collision.DetectCollisions(bodies);
@@ -41,7 +51,7 @@ public class PhysicsWorld : MonoBehaviour
 
         // Update positions & velocities (integration)
         for (int i = 0; i < bodies.Count; i++)
-            bodies[i].Integrate(Time.fixedDeltaTime);
+            bodies[i].Integrate(dt);
 
         // Resolve positions
         collisions = Collision.DetectCollisions(bodies);
@@ -51,6 +61,7 @@ public class PhysicsWorld : MonoBehaviour
         // Render
         SetColors();
     }
+
 
     public Body Add(GameObject prefab, Vector3 position, Quaternion rotation)
     {

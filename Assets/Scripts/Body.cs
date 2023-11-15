@@ -75,26 +75,6 @@ public class Body : MonoBehaviour
         return velocity;
     }
 
-    public void SetForce(Vector3 force)
-    {
-        this.force = force;
-    }
-
-    public void SetAcceleration(Vector3 acceleration)
-    {
-        force = acceleration * inverseMass;
-    }
-
-    public void SetImpulse(Vector3 impulse)
-    {
-        velocity = impulse * inverseMass;
-    }
-
-    public void SetVelocity(Vector3 velocity)
-    {
-        this.velocity = velocity;
-    }
-
     public void AddForce(Vector3 force)
     {
         this.force += force;
@@ -115,23 +95,22 @@ public class Body : MonoBehaviour
         this.velocity += velocity;
     }
 
+    public Vector3 GravitationalForce(Vector3 gravity)
+    {
+        return Dynamic() ? gravity * gravityScale / inverseMass : Vector3.zero;
+    }
+
     public void ApplyGravity(Vector3 gravity)
     {
-        // Can't apply gravity to masses of zero (divide by zero error)
-        if (Dynamic())
-            force += gravity * gravityScale / inverseMass;
+        force += GravitationalForce(gravity);
     }
 
     public void Integrate(float dt)
     {
-        // No point in integrating static objects
-        if (Dynamic())
-        {
-            Vector3 acc = force * inverseMass;
-            velocity += acc * dt;
-            velocity *= Mathf.Pow(damping, dt);
-            transform.position += velocity * damping * dt;
-            force = Vector3.zero;
-        }
+        Vector3 acc = force * inverseMass;
+        velocity += acc * dt;
+        velocity *= Mathf.Pow(damping, dt);
+        transform.position += velocity * damping * dt;
+        force = Vector3.zero;
     }
 }

@@ -87,17 +87,17 @@ public class Collision
                 Mtv mtv = new Mtv();
                 if (Check(bodies[i], bodies[j], mtv))
                 {
-                    // Ensure body1 is a dynamic object
-                    // Ensure normal points from body2 to body1
-                    Body body1 = bodies[i].Dynamic() ? bodies[i] : null;
-                    Body body2 = bodies[j].Dynamic() ? bodies[j] : null;
-                    if (body1 == null && body2 != null)
+                    Body body1 = bodies[i];
+                    Body body2 = bodies[j];
+                    if (!body1.Dynamic() && body2.Dynamic())
                     {
-                        body1 = body2;
-                        body2 = null;
                         mtv.normal *= -1.0f;
+                        collisions.Add(new Manifold() { body2 = body1, body1 = body2, mtv = mtv });
                     }
-                    collisions.Add(new Manifold() { body1 = body1, body2 = body2, mtv = mtv });
+                    else
+                    {
+                        collisions.Add(new Manifold() { body1 = body1, body2 = body2, mtv = mtv });
+                    }
                 }
             }
         }
@@ -106,20 +106,34 @@ public class Collision
 
     public static void ResolveDynamics(Manifold manifold)
     {
-        if (manifold.body2 != null)
+        if (manifold.body2.Dynamic())
         {
+            // Don't worry about rendering forces if both objects are dynamic
+            // Use the frenet-frame algorithm to do so if interested
             manifold.body1.AddForce( manifold.mtv.normal * manifold.body1.Force().magnitude * 0.5f);
             manifold.body2.AddForce(-manifold.mtv.normal * manifold.body2.Force().magnitude * 0.5f);
         }
         else
         {
+            // "Frenet-Frame algorithm" -- determines perpendicular vector to forward vector given a world up vector
+            float forceMagnitude = manifold.body1.Force().magnitude;
+            Vector3 forward = Vector3.Cross(manifold.mtv.normal, Vector3.up);
+
+            Vector3 fn = manifold.body2.transform.up * forceMagnitude;
+            Vector3 fs = Vector3.Cross(forward, manifold.mtv.normal).normalized * forceMagnitude;
+            Vector3 fg = manifold.body1.GravitationalForce(Physics.gravity);
+
+            Vector3 start = manifold.body1.transform.position;
+            Debug.DrawLine(start, start + fn, Color.green);
+            Debug.DrawLine(start, start + fs, Color.yellow);
+            Debug.DrawLine(start, start + fg, Color.magenta);
             manifold.body1.AddForce(manifold.mtv.normal * manifold.body1.Force().magnitude);
         }
     }
 
     public static void ResolvePenetration(Manifold manifold)
     {
-        if (manifold.body2 != null)
+        if (manifold.body2.Dynamic())
         {
             Vector3 mtv = manifold.mtv.normal * manifold.mtv.depth * 0.5f;
             manifold.body1.transform.position += mtv;
