@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public enum ShapeType
@@ -47,6 +45,7 @@ public class Body : MonoBehaviour
 
     public void SetMass(float mass)
     {
+        Debug.Assert(mass > 0.0f, "Mass must be greater than zero!");
         inverseMass = 1.0f / mass;
     }
 

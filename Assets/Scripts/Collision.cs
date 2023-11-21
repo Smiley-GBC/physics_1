@@ -104,6 +104,7 @@ public class Collision
         return collisions;
     }
 
+    // TODO -- separate Collision and Dynamics into separate files
     public static void ResolveDynamics(Manifold manifold)
     {
         if (manifold.body2.Dynamic())
@@ -115,20 +116,37 @@ public class Collision
         }
         else
         {
+            Body body = manifold.body1;
             // "Frenet-Frame algorithm" -- determines perpendicular vector to forward vector given a world up vector
-            float forceMagnitude = manifold.body1.Force().magnitude;
+            float forceMagnitude = body.Force().magnitude;
             Vector3 forward = Vector3.Cross(manifold.mtv.normal, Vector3.up);
 
             Vector3 fn = manifold.body2.transform.up * forceMagnitude;
             Vector3 fs = Vector3.Cross(forward, manifold.mtv.normal).normalized * forceMagnitude;
-            Vector3 fg = manifold.body1.GravitationalForce(Physics.gravity);
+            Vector3 fg = body.GravitationalForce(Physics.gravity);
 
-            Vector3 start = manifold.body1.transform.position;
+            Vector3 start = body.transform.position;
             Debug.DrawLine(start, start + fn, Color.green);
             Debug.DrawLine(start, start + fs, Color.yellow);
             Debug.DrawLine(start, start + fg, Color.magenta);
-            manifold.body1.AddForce(manifold.mtv.normal * manifold.body1.Force().magnitude);
+            body.AddForce(manifold.mtv.normal * body.Force().magnitude);
+
+            // Proof of concept.
+            // Since the velocity will be different after integrating Fg & Fn, this doesn't quite work.
+            // Fix by separating vel vs pos integration
+            Vector3 counterAcceleration = CounterAcceleration(body.Velocity(), Time.fixedDeltaTime);
+            body.AddAcceleration(counterAcceleration);
         }
+    }
+
+    // Return an acceleration that will zero the passed-in velocity after integration
+    public static Vector3 CounterAcceleration(Vector3 velocity, float dt)
+    {
+        // vf = vi + a * t
+        // 0 = vi + a * t
+        // -vi = a * t
+        // -vi / t = a
+        return (-velocity / dt);
     }
 
     public static void ResolvePenetration(Manifold manifold)

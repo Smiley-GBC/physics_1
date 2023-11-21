@@ -132,28 +132,14 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 611129686}
-  - component: {fileID: 611129685}
+  - component: {fileID: 611129687}
   m_Layer: 0
-  m_Name: PhysicsWorld
+  m_Name: Game
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &611129685
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 611129684}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 33ea9e9655c33ec4ba753a0b1f6cc83c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  spherePrefab: {fileID: 15372482419040825, guid: 01b0f12b350b7264b8dda77f726cd771, type: 3}
-  planePrefab: {fileID: 468040250448072562, guid: 09b9b0ac3eac8bc47a3e0e2ae6953b4d, type: 3}
 --- !u!4 &611129686
 Transform:
   m_ObjectHideFlags: 0
@@ -169,6 +155,20 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &611129687
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 611129684}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 449c1f24dec27324bb2551ca1f501ebe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  spherePrefab: {fileID: 15372482419040825, guid: 01b0f12b350b7264b8dda77f726cd771, type: 3}
+  planePrefab: {fileID: 468040250448072562, guid: 09b9b0ac3eac8bc47a3e0e2ae6953b4d, type: 3}
 --- !u!1 &1220759329
 GameObject:
   m_ObjectHideFlags: 0

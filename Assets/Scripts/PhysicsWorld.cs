@@ -2,43 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PhysicsWorld : MonoBehaviour
+public class PhysicsWorld
 {
-    public GameObject spherePrefab;
-    public GameObject planePrefab;
-    Body plane;
+    // The following values are initialized at runtime so they can't be used as constants...
+    public float step;      //Time.fixedDeltaTime 
+    public Vector3 gravity; //Physics.gravity
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        Init7();
-    }
-
-    void Init7()
-    {
-        for (float angle = -15.0f; angle < 15.0f; angle += 5.0f)
-        {
-            Body body = Add(spherePrefab, new Vector3(angle, 5.0f, 0.0f), Quaternion.identity);
-            body.shape = new Sphere { radius = 0.5f };
-            body.shape.type = ShapeType.SPHERE;
-        }
-
-        plane = Add(planePrefab, Vector3.zero, Quaternion.Euler(0.0f, 0.0f, 0.0f));
-        plane.shape = new Plane { type = ShapeType.PLANE };
-        plane.SetInfiniteMass();
-    }
-
-    private void Update()
-    {
-        //Simulate(Physics.gravity, Time.deltaTime);
-    }
-
-    private void FixedUpdate()
-    {
-        Simulate(Physics.gravity, Time.fixedDeltaTime);
-    }
-
-    void Simulate(Vector3 gravity, float dt)
+    public void Simulate()
     {
         // Forces
         for (int i = 0; i < bodies.Count; i++)
@@ -51,21 +21,20 @@ public class PhysicsWorld : MonoBehaviour
 
         // Update positions & velocities (integration)
         for (int i = 0; i < bodies.Count; i++)
-            bodies[i].Integrate(dt);
+            bodies[i].Integrate(step);
 
         // Resolve positions
-        collisions = Collision.DetectCollisions(bodies);
-        for (int i = 0; i < collisions.Count; i++)
-            Collision.ResolvePenetration(collisions[i]);
+        //collisions = Collision.DetectCollisions(bodies);
+        //for (int i = 0; i < collisions.Count; i++)
+        //    Collision.ResolvePenetration(collisions[i]);
 
         // Render
         SetColors();
     }
 
-
     public Body Add(GameObject prefab, Vector3 position, Quaternion rotation)
     {
-        GameObject physicsObject = Instantiate(prefab, position, rotation);
+        GameObject physicsObject = Object.Instantiate(prefab, position, rotation);
         Body body = physicsObject.GetComponent<Body>();
         bodies.Add(body);
         return body;
@@ -74,7 +43,7 @@ public class PhysicsWorld : MonoBehaviour
     public void Remove(Body body)
     {
         bodies.Remove(body);
-        Destroy(body.gameObject);
+        Object.Destroy(body.gameObject);
     }
 
     public void RemoveAll()
