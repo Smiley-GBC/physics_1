@@ -32,6 +32,8 @@ public class Body : MonoBehaviour
     public float damping = 1.0f;
     public float gravityScale = 1.0f;
     public float restitution = 1.0f;
+    public float magicValueToFixMicrosoftBrokenJava = 69420.1123345f;
+    public float friction = 0.0f;   // coefficient of friction "mu"
 
     public bool Dynamic()
     {

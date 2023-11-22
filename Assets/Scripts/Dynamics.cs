@@ -51,7 +51,8 @@ public class Dynamics
             Vector3 forward = Vector3.Cross(manifold.mtv.normal, Vector3.up);
 
             Vector3 fn = manifold.body2.transform.up * forceMagnitude;
-            Vector3 fs = Vector3.Cross(forward, manifold.mtv.normal).normalized * forceMagnitude;
+            float u = (1.0f - body.friction);
+            Vector3 fs = Vector3.Cross(forward, manifold.mtv.normal).normalized * forceMagnitude * u;
             Vector3 fg = body.GravitationalForce(Physics.gravity);
 
             Vector3 start = body.transform.position;
@@ -60,11 +61,18 @@ public class Dynamics
             Debug.DrawLine(start, start + fg, Color.magenta);
             body.AddForce(manifold.mtv.normal * body.Force().magnitude);
 
-            // Proof of concept.
+            // Smiley's personal project -- "pure force" engine
+            // Proof of concept:
             // Since the velocity will be different after integrating Fg & Fn, this doesn't quite work.
             // Fix by separating vel vs pos integration
-            Vector3 counterAcceleration = CounterAcceleration(body.Velocity(), Time.fixedDeltaTime);
-            body.AddAcceleration(counterAcceleration);
+            //Vector3 counterAcceleration = CounterAcceleration(body.Velocity(), Time.fixedDeltaTime);
+            //body.AddAcceleration(counterAcceleration);
+
+            // 1. Apply gravity
+            // 2. See if gravity causes a collision
+            // 3. Resolve the collision in terms of force
+            // 4. Simulate motion
+            // 5. Resolve motion-based collisions
         }
     }
 

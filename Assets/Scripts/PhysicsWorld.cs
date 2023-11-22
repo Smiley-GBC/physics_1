@@ -10,12 +10,6 @@ public class PhysicsWorld
 
     public void Simulate()
     {
-        // 1. Apply gravity
-        // 2. See if gravity causes a collision
-        // 3. Resolve the collision in terms of force
-        // 4. Simulate motion
-        // 5. Resolve motion-based collisions
-
         // Forces
         for (int i = 0; i < bodies.Count; i++)
             bodies[i].ApplyGravity(gravity);
@@ -29,10 +23,10 @@ public class PhysicsWorld
         for (int i = 0; i < bodies.Count; i++)
             bodies[i].Integrate(step);
 
-        // Resolve positions
-        //collisions = Collision.DetectCollisions(bodies);
-        //for (int i = 0; i < collisions.Count; i++)
-        //    Collision.Resolve(collisions[i]);
+        // Resolve positions (pure force engine shouldn't need this)
+        collisions = Collision.DetectCollisions(bodies);
+        for (int i = 0; i < collisions.Count; i++)
+            Collision.Resolve(collisions[i]);
 
         // Render
         SetColors();
