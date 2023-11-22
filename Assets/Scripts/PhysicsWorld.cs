@@ -10,6 +10,12 @@ public class PhysicsWorld
 
     public void Simulate()
     {
+        // 1. Apply gravity
+        // 2. See if gravity causes a collision
+        // 3. Resolve the collision in terms of force
+        // 4. Simulate motion
+        // 5. Resolve motion-based collisions
+
         // Forces
         for (int i = 0; i < bodies.Count; i++)
             bodies[i].ApplyGravity(gravity);
@@ -17,7 +23,7 @@ public class PhysicsWorld
         // Apply collision forces
         List<Manifold> collisions = Collision.DetectCollisions(bodies);
         for (int i = 0; i < collisions.Count; i++)
-            Collision.ResolveDynamics(collisions[i]);
+            Dynamics.Resolve(collisions[i]);
 
         // Update positions & velocities (integration)
         for (int i = 0; i < bodies.Count; i++)
@@ -26,7 +32,7 @@ public class PhysicsWorld
         // Resolve positions
         //collisions = Collision.DetectCollisions(bodies);
         //for (int i = 0; i < collisions.Count; i++)
-        //    Collision.ResolvePenetration(collisions[i]);
+        //    Collision.Resolve(collisions[i]);
 
         // Render
         SetColors();
@@ -56,6 +62,7 @@ public class PhysicsWorld
     {
         List<bool> collisions = new List<bool>(new bool[bodies.Count]);
 
+        // No guarantee about the order of Collision.DetectCollisions(bodies) so must test manually
         for (int i = 0; i < bodies.Count; i++)
         {
             for (int j = i + 1; j < bodies.Count; j++)

@@ -94,6 +94,16 @@ public class Body : MonoBehaviour
         this.velocity += velocity;
     }
 
+    public void SetForce(Vector3 force)
+    {
+        this.force = force;
+    }
+
+    public void SetVelocity(Vector3 velocity)
+    {
+        this.velocity = velocity;
+    }
+
     public Vector3 GravitationalForce(Vector3 gravity)
     {
         return Dynamic() ? gravity * gravityScale / inverseMass : Vector3.zero;
