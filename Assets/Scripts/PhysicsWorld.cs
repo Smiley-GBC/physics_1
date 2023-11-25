@@ -236,18 +236,33 @@ public class PhysicsWorld
             {
                 // Exit if both objects are static
                 float invMassSum = invMasses[collision.a] + invMasses[collision.b];
-                if (invMassSum <= Mathf.Epsilon) break;
+                if (invMassSum <= Mathf.Epsilon) continue;
 
                 // Exit if both objects are moving away from each other
                 Vector3 vBA = velocities[collision.a] - velocities[collision.b];
                 float t = Vector3.Dot(vBA, collision.mtv.normal);
-                if (t > 0.0f) break;
+                if (t > 0.0f) continue;
 
                 // Apply impulse to velocities
                 float restitution = Mathf.Min(restitutions[collision.a], restitutions[collision.b]);
-                Vector3 impulse = collision.mtv.normal * (-(1.0f + restitution) * t / invMassSum);
+                float impulseMagnitude = -(1.0f + restitution) * t / invMassSum;
+                Vector3 impulse = collision.mtv.normal * impulseMagnitude;
                 velocities[collision.a] += impulse * invMasses[collision.a];
                 velocities[collision.b] -= impulse * invMasses[collision.b];
+
+                // Scale friction based on how similar the relative velocity is to the collision normal
+                Vector3 frictionDirection = (vBA - (collision.mtv.normal * t)).normalized;
+                float frictionMagnitude = -Vector3.Dot(vBA, frictionDirection) / invMassSum;
+
+                // Coulomb's Law
+                float mu = Mathf.Sqrt(frictions[collision.a] * frictions[collision.b]);
+                frictionMagnitude = Mathf.Clamp(frictionMagnitude,
+                    -impulseMagnitude * mu, impulseMagnitude * mu);
+
+                // Apply friction to velocities
+                Vector3 friction = frictionMagnitude * frictionDirection;
+                velocities[collision.a] += friction * invMasses[collision.a];
+                velocities[collision.b] -= friction * invMasses[collision.b];
             }
         }
 
