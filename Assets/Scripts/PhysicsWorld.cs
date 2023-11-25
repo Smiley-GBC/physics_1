@@ -161,7 +161,9 @@ public class PhysicsWorld
         Dynamics.Integrate(mPositions, mVelocities, dt);
 
         // 3. Resolve collisions
-        Collision.ResolvePositions(mPositions, mColliders, Collision.Collisions(mPositions, mColliders));
+        List<Manifold> collisions = Collision.Collisions(mPositions, mColliders);
+        Collision.ResolveVelocities(mVelocities, mInvMasses, mFrictions, mRestitutions, collisions);
+        Collision.ResolvePositions(mPositions, mColliders, collisions);
     }
 
     List<Vector3> mPositions = new List<Vector3>();
@@ -223,6 +225,30 @@ public class PhysicsWorld
                 }
             }
             return collisions;
+        }
+
+        public static void ResolveVelocities(
+            List<Vector3> velocities, List<float> invMasses,
+            List<float> frictions, List<float> restitutions,
+            List<Manifold> collisions)
+        {
+            foreach (Manifold collision in collisions)
+            {
+                // Exit if both objects are static
+                float invMassSum = invMasses[collision.a] + invMasses[collision.b];
+                if (invMassSum <= Mathf.Epsilon) break;
+
+                // Exit if both objects are moving away from each other
+                Vector3 vBA = velocities[collision.a] - velocities[collision.b];
+                float t = Vector3.Dot(vBA, collision.mtv.normal);
+                if (t > 0.0f) break;
+
+                // Apply impulse to velocities
+                float restitution = Mathf.Min(restitutions[collision.a], restitutions[collision.b]);
+                Vector3 impulse = collision.mtv.normal * (-(1.0f + restitution) * t / invMassSum);
+                velocities[collision.a] += impulse * invMasses[collision.a];
+                velocities[collision.b] -= impulse * invMasses[collision.b];
+            }
         }
 
         public static void ResolvePositions(List<Vector3> positions, List<Collider> colliders,
