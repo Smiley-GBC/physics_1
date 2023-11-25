@@ -142,39 +142,34 @@ public class PhysicsWorld
 
     void Simulate(float dt)
     {
-        // 1. Accumulate applied force (user input)
+        // 1. Apply net force (Fa + Fg) as acceleration, then reset net force
         for (int i = 0; i < mAccelrations.Count; i++)
+        {
             mAccelrations[i] = mNetForces[i] * mInvMasses[i];
-
-        // 2. Accumnulate gravitational force
-        for (int i = 0; i < mAccelrations.Count; i++)
             mAccelrations[i] += gravity * mGravityScales[i];
+            mNetForces[i] = Vector3.zero;
+        }
 
+        // 2. Predict one frame worth of integration
         List<Vector3> velocities = new List<Vector3>(mVelocities);
         List<Vector3> positions = new List<Vector3>(mPositions);
         Dynamics.Integrate(velocities, mAccelrations, dt);
         Dynamics.Integrate(positions, velocities, dt);
         
-        // This backwards step works, but a little too well...
-        // If there's no collision, it adds counter-force such that there's no movement!
+        // 3. Check for future collisions then work backwards
         List<Manifold> collisions = Collision.Collisions(positions, mColliders);
         List<Vector3> resolvedPositions = new List<Vector3>(positions);
         Collision.ResolvePositions(resolvedPositions, mColliders, collisions);
         List<Vector3> resolvedVelocities = Dynamics.Differentiate(positions, resolvedPositions, dt);
-        List<Vector3> resolvedAccelerations = Dynamics.Differentiate(velocities, resolvedVelocities, dt);
-        for (int i = 0; i < mAccelrations.Count; i++)
-            mAccelrations[i] += resolvedAccelerations[i];
+        for (int i = 0; i < resolvedVelocities.Count; i++)
+            mAccelrations[i] += resolvedVelocities[i] / dt;
 
-        // (Pure-Force engine would run its 2nd step here instead of continuing integration)
+        // 4. Integrate the corrected accelerations!
         Dynamics.Integrate(mVelocities, mAccelrations, dt);
         Dynamics.Integrate(mPositions, mVelocities, dt);
 
-        // Resolve penetration
+        // 5. Resolve penetration (optional since forces should prevent penetration)!
         //Collision.ResolvePositions(mPositions, mColliders, Collision.Collisions(mPositions, mColliders));
-
-        // Reset net forces
-        for (int i = 0; i < mNetForces.Count; i++)
-            mNetForces[i] = Vector3.zero;
     }
 
     List<Vector3> mPositions = new List<Vector3>();
@@ -207,15 +202,6 @@ public class PhysicsWorld
                 output[i] += input[i] * dt;
             }
         }
-
-        // a = F / m
-        //public static Lf3 Accelerations(Lf3 netForces, Lf1 inverseMasses)
-        //{
-        //    Lf3 accelerations = new Lf3(netForces.Count);
-        //    for (int i = 0; i < accelerations.Count; i++)
-        //        accelerations[i] = netForces[i] * inverseMasses[i];
-        //    return accelerations;
-        //}
     }
 
     // Essentially the same as Collision, but as an inner class of PhysicsWorld
@@ -243,27 +229,6 @@ public class PhysicsWorld
             }
             return collisions;
         }
-
-        // Accepts list of integrated positions. Works backwards from there
-        //public static void ResolveForces(List<Vector3> positions, List<Vector3> accelerations,
-        //    List<Collider> colliders)
-        //{
-        //
-        //    List<Manifold> collisions = Collisions(positions, colliders);
-        //    foreach (Manifold collision in collisions)
-        //    {
-        //        Vector3 mtv = collision.mtv.normal * collision.mtv.depth;
-        //        if (colliders[collision.b].dynamic)
-        //        {
-        //            positions[collision.a] += mtv * 0.5f;
-        //            positions[collision.b] -= mtv * 0.5f;
-        //        }
-        //        else
-        //        {
-        //            positions[collision.a] += mtv;
-        //        }
-        //    }
-        //}
 
         public static void ResolvePositions(List<Vector3> positions, List<Collider> colliders,
             List<Manifold> collisions)
