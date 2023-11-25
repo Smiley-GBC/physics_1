@@ -46,10 +46,11 @@ public class PhysicsWorld
         Object.Destroy(body.gameObject);
     }
 
-    public void RemoveAll()
+    public void Clear()
     {
         for (int i = 0; i < bodies.Count; i++)
-            Remove(bodies[i]);
+            Object.Destroy(bodies[i].gameObject);
+        bodies.Clear();
     }
 
     void SetColors()

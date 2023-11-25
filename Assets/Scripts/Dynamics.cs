@@ -51,8 +51,7 @@ public class Dynamics
             Vector3 forward = Vector3.Cross(manifold.mtv.normal, Vector3.up);
 
             Vector3 fn = manifold.body2.transform.up * forceMagnitude;
-            float u = (1.0f - body.friction);
-            Vector3 fs = Vector3.Cross(forward, manifold.mtv.normal).normalized * forceMagnitude * u;
+            Vector3 fs = Vector3.Cross(forward, manifold.mtv.normal).normalized * forceMagnitude;
             Vector3 fg = body.GravitationalForce(Physics.gravity);
 
             Vector3 start = body.transform.position;

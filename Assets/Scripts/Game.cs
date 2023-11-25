@@ -18,7 +18,6 @@ public class Game : MonoBehaviour
         {
             Body sphere = world.Add(spherePrefab, new Vector3(angle, 5.0f, 0.0f), Quaternion.identity);
             sphere.shape = new Sphere { type = ShapeType.SPHERE, radius = 0.5f };
-            Debug.Log(sphere.friction);
         }
 
         // Instatiate the ground plane and add it to our physics world
