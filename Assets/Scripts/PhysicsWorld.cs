@@ -12,7 +12,6 @@ public struct Particle
 
     public Collider collider;
 
-    // Works in progress:
     public float friction;
     public float restitution;
 }
@@ -69,6 +68,9 @@ public class PhysicsWorld
         mGravityScales.Add(p.gravityScale);
 
         mColliders.Add(p.collider);
+
+        mFrictions.Add(p.friction);
+        mRestitutions.Add(p.restitution);
     }
 
     public void Remove(GameObject obj)
@@ -85,6 +87,10 @@ public class PhysicsWorld
         mGravityScales.RemoveAt(index);
 
         mColliders.RemoveAt(index);
+
+        mFrictions.RemoveAt(index);
+        mRestitutions.RemoveAt(index);
+
         links.Remove(obj);
     }
 
@@ -150,26 +156,12 @@ public class PhysicsWorld
             mNetForces[i] = Vector3.zero;
         }
 
-        // 2. Predict one frame worth of integration
-        List<Vector3> velocities = new List<Vector3>(mVelocities);
-        List<Vector3> positions = new List<Vector3>(mPositions);
-        Dynamics.Integrate(velocities, mAccelrations, dt);
-        Dynamics.Integrate(positions, velocities, dt);
-        
-        // 3. Check for future collisions then work backwards
-        List<Manifold> collisions = Collision.Collisions(positions, mColliders);
-        List<Vector3> resolvedPositions = new List<Vector3>(positions);
-        Collision.ResolvePositions(resolvedPositions, mColliders, collisions);
-        List<Vector3> resolvedVelocities = Dynamics.Differentiate(positions, resolvedPositions, dt);
-        for (int i = 0; i < resolvedVelocities.Count; i++)
-            mAccelrations[i] += resolvedVelocities[i] / dt;
-
-        // 4. Integrate the corrected accelerations!
+        // 2. Integrate velocities and positions
         Dynamics.Integrate(mVelocities, mAccelrations, dt);
         Dynamics.Integrate(mPositions, mVelocities, dt);
 
-        // 5. Resolve penetration (optional since forces should prevent penetration)!
-        //Collision.ResolvePositions(mPositions, mColliders, Collision.Collisions(mPositions, mColliders));
+        // 3. Resolve collisions
+        Collision.ResolvePositions(mPositions, mColliders, Collision.Collisions(mPositions, mColliders));
     }
 
     List<Vector3> mPositions = new List<Vector3>();
@@ -181,6 +173,9 @@ public class PhysicsWorld
     List<float> mGravityScales = new List<float>();
 
     List<Collider> mColliders = new List<Collider>();
+
+    List<float> mFrictions = new List<float>();
+    List<float> mRestitutions = new List<float>();
 
     // Gotta put everything in the same file if I want my typedefs...
     public static class Dynamics

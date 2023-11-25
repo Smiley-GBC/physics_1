@@ -1,8 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class Game2 : MonoBehaviour
+public class Game : MonoBehaviour
 {
     PhysicsWorld world = new PhysicsWorld();
     public GameObject spherePrefab;
@@ -10,22 +8,6 @@ public class Game2 : MonoBehaviour
 
     void Start()
     {
-        // Instantiate spheres and add them to our physics world
-        //for (float angle = -15.0f; angle < 15.0f; angle += 5.0f)
-        //{
-        //    GameObject sphere = Instantiate(spherePrefab);
-        //    Particle sphereData = new Particle
-        //    {
-        //        pos = new Vector3(angle, 5.0f, 0.0f),
-        //        vel = Vector3.zero,
-        //        mass = 1.0f,
-        //        gravityScale = 0.25f,
-        //
-        //        collider = new Collider { shape = Shape.SPHERE, radius = 0.5f, dynamic = true }
-        //    };
-        //    world.Add(sphere, sphereData);
-        //}
-
         {
             GameObject sphere = Instantiate(spherePrefab);
             Particle sphereData = new Particle
@@ -35,7 +17,10 @@ public class Game2 : MonoBehaviour
                 mass = 1.0f,
                 gravityScale = 1.0f,
 
-                collider = new Collider { shape = Shape.SPHERE, radius = 0.5f, dynamic = true }
+                collider = new Collider { shape = Shape.SPHERE, radius = 0.5f, dynamic = true },
+
+                friction = 0.0f,
+                restitution = 1.0f
             };
             world.Add(sphere, sphereData);
         }
@@ -49,7 +34,10 @@ public class Game2 : MonoBehaviour
                 mass = 1.0f,
                 gravityScale = 1.0f,
 
-                collider = new Collider { shape = Shape.SPHERE, radius = 0.5f, dynamic = true }
+                collider = new Collider { shape = Shape.SPHERE, radius = 0.5f, dynamic = true },
+
+                friction = 0.75f,
+                restitution = 0.5f
             };
             world.Add(sphere, sphereData);
         }
@@ -64,7 +52,10 @@ public class Game2 : MonoBehaviour
                 mass = 1.0f,
                 gravityScale = 0.0f,
 
-                collider = new Collider { shape = Shape.PLANE, normal = Vector3.up, dynamic = false }
+                collider = new Collider { shape = Shape.PLANE, normal = Vector3.up, dynamic = false },
+
+                friction = 0.0f,
+                restitution = 1.0f
             };
             world.Add(plane, planeData);
         }
