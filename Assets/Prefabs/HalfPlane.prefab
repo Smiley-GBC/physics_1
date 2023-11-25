@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 3137461393130646490}
   - component: {fileID: 7638904776702391302}
   - component: {fileID: 545073068795888898}
-  - component: {fileID: 1077272497533073724}
   m_Layer: 0
   m_Name: HalfPlane
   m_TagString: Untagged
@@ -84,18 +83,3 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!114 &1077272497533073724
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 468040250448072562}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8240900c97fcde54da39cc094a23a7db, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  damping: 1
-  gravityScale: 1
-  restitution: 1

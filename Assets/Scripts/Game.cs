@@ -1,7 +1,8 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-// Decouples Unity-specific functionality (Start, FixedUpdate, Inspector) from our C# physics engine.
-public class Game : MonoBehaviour
+public class Game2 : MonoBehaviour
 {
     PhysicsWorld world = new PhysicsWorld();
     public GameObject spherePrefab;
@@ -9,28 +10,75 @@ public class Game : MonoBehaviour
 
     void Start()
     {
-        // Define world settings
-        world.step = Time.fixedDeltaTime;
-        world.gravity = Physics.gravity;
-
         // Instantiate spheres and add them to our physics world
-        for (float angle = -15.0f; angle < 15.0f; angle += 5.0f)
+        //for (float angle = -15.0f; angle < 15.0f; angle += 5.0f)
+        //{
+        //    GameObject sphere = Instantiate(spherePrefab);
+        //    Particle sphereData = new Particle
+        //    {
+        //        pos = new Vector3(angle, 5.0f, 0.0f),
+        //        vel = Vector3.zero,
+        //        mass = 1.0f,
+        //        gravityScale = 0.25f,
+        //        moves = true,
+        //
+        //        collider = new Collider { shape = Shape2.SPHERE, radius = 0.5f  }
+        //    };
+        //    world.Add(sphere, sphereData);
+        //}
+
         {
-            Body sphere = world.Add(spherePrefab, new Vector3(angle, 5.0f, 0.0f), Quaternion.identity);
-            sphere.shape = new Sphere { type = ShapeType.SPHERE, radius = 0.5f };
+            GameObject sphere = Instantiate(spherePrefab);
+            Particle sphereData = new Particle
+            {
+                pos = new Vector3(0.0f, 5.0f, 0.0f),
+                vel = Vector3.zero,
+                mass = 1.0f,
+                gravityScale = 1.0f,
+                moves = true,
+
+                collider = new Collider { shape = Shape.SPHERE, radius = 0.5f }
+            };
+            world.Add(sphere, sphereData);
+        }
+
+        {
+            GameObject sphere = Instantiate(spherePrefab);
+            Particle sphereData = new Particle
+            {
+                pos = new Vector3(-3.0f, 5.0f, 0.0f),
+                vel = new Vector3(1.0f, 0.0f, 0.0f),
+                mass = 1.0f,
+                gravityScale = 1.0f,
+                moves = true,
+
+                collider = new Collider { shape = Shape.SPHERE, radius = 0.5f }
+            };
+            world.Add(sphere, sphereData);
         }
 
         // Instatiate the ground plane and add it to our physics world
         {
-            Body plane = world.Add(planePrefab, Vector3.zero, Quaternion.Euler(0.0f, 0.0f, 0.0f));
-            plane.shape = new Plane { type = ShapeType.PLANE };
-            plane.SetInfiniteMass();
+            GameObject plane = Instantiate(planePrefab);
+            Particle planeData = new Particle
+            {
+                pos = Vector3.zero,
+                vel = Vector3.zero,
+                mass = 1.0f,
+                gravityScale = 0.0f,
+                moves = false,
+
+                collider = new Collider { shape = Shape.PLANE, normal = Vector3.up }
+            };
+            world.Add(plane, planeData);
         }
     }
 
-    // World update frequency must match its time-step otherwise things will explode
-    void FixedUpdate()
+    // Late upadte so users apply transformations & forces before physics simulation
+    void LateUpdate()
     {
-        world.Simulate();
+        world.PreUpdate();              // Write from Unity to Engine
+        world.Update(Time.deltaTime);   // Update Engine
+        world.PostUpdate();             // Write from Engine to Unity
     }
 }
