@@ -6,14 +6,14 @@ public struct Particle
 {
     public Vector3 pos;
     public Vector3 vel;
+    public Vector3 acc;
 
     public float gravityScale;
     public float mass;
-
-    public Collider collider;
-
     public float friction;
     public float restitution;
+
+    public Collider collider;
 }
 
 public class Collider
@@ -57,41 +57,37 @@ public class PhysicsWorld
     public void Add(GameObject obj, Particle p)
     {
         links.Add(obj, links.Count);
+
         mPositions.Add(p.pos);
         mVelocities.Add(p.vel);
-
-        // If the user wants force, they must call AddForce to accumulate acceleration
-        mAccelrations.Add(Vector3.zero);
+        mAccelrations.Add(p.acc);
         mNetForces.Add(Vector3.zero);
 
         mInvMasses.Add(p.collider.dynamic ? 1.0f / p.mass : 0.0f);
         mGravityScales.Add(p.gravityScale);
-
-        mColliders.Add(p.collider);
-
         mFrictions.Add(p.friction);
         mRestitutions.Add(p.restitution);
+
+        mColliders.Add(p.collider);
     }
 
     public void Remove(GameObject obj)
     {
         // TODO -- swap key-value pair with last element
         int index = links[obj];
+        links.Remove(obj);
 
         mPositions.RemoveAt(index);
         mVelocities.RemoveAt(index);
         mAccelrations.RemoveAt(index);
-
         mNetForces.RemoveAt(index);
+
         mInvMasses.RemoveAt(index);
         mGravityScales.RemoveAt(index);
-
-        mColliders.RemoveAt(index);
-
         mFrictions.RemoveAt(index);
         mRestitutions.RemoveAt(index);
 
-        links.Remove(obj);
+        mColliders.RemoveAt(index);
     }
 
     // Simulate physics at the frequency of timestep (aka run FixedUpdate)
@@ -169,17 +165,15 @@ public class PhysicsWorld
     List<Vector3> mPositions = new List<Vector3>();
     List<Vector3> mVelocities = new List<Vector3>();
     List<Vector3> mAccelrations = new List<Vector3>();
-
     List<Vector3> mNetForces = new List<Vector3>();
+
     List<float> mInvMasses = new List<float>();
     List<float> mGravityScales = new List<float>();
-
-    List<Collider> mColliders = new List<Collider>();
-
     List<float> mFrictions = new List<float>();
     List<float> mRestitutions = new List<float>();
 
-    // Gotta put everything in the same file if I want my typedefs...
+    List<Collider> mColliders = new List<Collider>();
+
     public static class Dynamics
     {
         public static List<Vector3> Differentiate(List<Vector3> initial, List<Vector3> final, float dt)
@@ -258,7 +252,6 @@ public class PhysicsWorld
         }
     }
 
-    // Essentially the same as Collision, but as an inner class of PhysicsWorld
     public static class Collision
     {
         public static List<Manifold> Collisions(List<Vector3> positions, List<Collider> colliders)

@@ -8,12 +8,15 @@ public class Game : MonoBehaviour
 
     void Start()
     {
+        // Left sphere moving right that will stop bouncing and come to rest
         {
             GameObject sphere = Instantiate(spherePrefab);
             Particle sphereData = new Particle
             {
                 pos = new Vector3(-3.0f, 0.5f, 0.0f),
                 vel = new Vector3(3.0f, 0.0f, 0.0f),
+                acc = Vector3.zero,
+
                 mass = 1.0f,
                 gravityScale = 1.0f,
 
@@ -25,12 +28,15 @@ public class Game : MonoBehaviour
             world.Add(sphere, sphereData);
         }
 
+        // Right sphere that will ricochet off left sphere then continue to move and bounce
         {
             GameObject sphere = Instantiate(spherePrefab);
             Particle sphereData = new Particle
             {
                 pos = new Vector3(-1.0f, 5.0f, 0.0f),
                 vel = new Vector3(-1.0f, 0.0f, 0.0f),
+                acc = Vector3.zero,
+
                 mass = 1.0f,
                 gravityScale = 1.0f,
 
@@ -49,6 +55,8 @@ public class Game : MonoBehaviour
             {
                 pos = Vector3.zero,
                 vel = Vector3.zero,
+                acc = Vector3.zero,
+
                 mass = 1.0f,
                 gravityScale = 0.0f,
 
