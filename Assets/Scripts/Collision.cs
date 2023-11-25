@@ -50,6 +50,21 @@ public class Collision
         return false;
     }
 
+    public static bool Check2(
+        Vector3 position1, Vector3 position2, Collider collider1, Collider collider2, Mtv mtv = null)
+    {
+        if (collider1.shape == Shape2.SPHERE && collider2.shape == Shape2.SPHERE)
+            return SphereSphere(position1, collider1.radius, position2, collider2.radius, mtv);
+
+        if (collider1.shape == Shape2.SPHERE && collider2.shape == Shape2.PLANE)
+            return SpherePlane(position1, collider1.radius, position2, collider2.normal, mtv);
+
+        if (collider1.shape == Shape2.PLANE && collider2.shape == Shape2.SPHERE)
+            return SpherePlane(position2, collider2.radius, position1, collider2.normal, mtv);
+
+        return false;
+    }
+
     public static bool SphereSphere(Vector3 position1, float radius1, Vector3 position2, float radius2, Mtv mtv = null)
     {
         Vector3 direction = position1 - position2;
