@@ -162,8 +162,8 @@ public class PhysicsWorld
 
         // 3. Resolve collisions
         List<Manifold> collisions = Collision.Collisions(mPositions, mColliders);
-        Collision.ResolveVelocities(mVelocities, mInvMasses, mFrictions, mRestitutions, collisions);
-        Collision.ResolvePositions(mPositions, mColliders, collisions);
+        Dynamics.ResolveVelocities(mVelocities, mInvMasses, mFrictions, mRestitutions, collisions);
+        Dynamics.ResolvePositions(mPositions, mColliders, collisions);
     }
 
     List<Vector3> mPositions = new List<Vector3>();
@@ -198,33 +198,6 @@ public class PhysicsWorld
             {
                 output[i] += input[i] * dt;
             }
-        }
-    }
-
-    // Essentially the same as Collision, but as an inner class of PhysicsWorld
-    public static class Collision
-    {
-        public static List<Manifold> Collisions(List<Vector3> positions, List<Collider> colliders)
-        {
-            List<Manifold> collisions = new List<Manifold>();
-            for (int i = 0; i < positions.Count; i++)
-            {
-                for (int j = i + 1; j < positions.Count; j++)
-                {
-                    Mtv mtv = new Mtv();
-                    if (Check(positions[i], colliders[i], positions[j], colliders[j], mtv))
-                    {
-                        if (!colliders[i].dynamic && colliders[j].dynamic)
-                        {
-                            mtv.normal *= 1.0f;
-                            collisions.Add(new Manifold() { a = j, b = i, mtv = mtv });
-                        }
-                        else
-                            collisions.Add(new Manifold() { a = i, b = j, mtv = mtv });
-                    }
-                }
-            }
-            return collisions;
         }
 
         public static void ResolveVelocities(
@@ -282,6 +255,33 @@ public class PhysicsWorld
                     positions[collision.a] += mtv;
                 }
             }
+        }
+    }
+
+    // Essentially the same as Collision, but as an inner class of PhysicsWorld
+    public static class Collision
+    {
+        public static List<Manifold> Collisions(List<Vector3> positions, List<Collider> colliders)
+        {
+            List<Manifold> collisions = new List<Manifold>();
+            for (int i = 0; i < positions.Count; i++)
+            {
+                for (int j = i + 1; j < positions.Count; j++)
+                {
+                    Mtv mtv = new Mtv();
+                    if (Check(positions[i], colliders[i], positions[j], colliders[j], mtv))
+                    {
+                        if (!colliders[i].dynamic && colliders[j].dynamic)
+                        {
+                            mtv.normal *= 1.0f;
+                            collisions.Add(new Manifold() { a = j, b = i, mtv = mtv });
+                        }
+                        else
+                            collisions.Add(new Manifold() { a = i, b = j, mtv = mtv });
+                    }
+                }
+            }
+            return collisions;
         }
 
         public static bool Check(
