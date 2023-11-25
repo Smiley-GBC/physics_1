@@ -150,19 +150,27 @@ public class PhysicsWorld
         for (int i = 0; i < mAccelrations.Count; i++)
             mAccelrations[i] += gravity * mGravityScales[i];
 
-        //List<Vector3> velocities = new List<Vector3>(mVelocities);
-        //List<Vector3> positions = new List<Vector3>(mPositions);
-        //Dynamics.Integrate(velocities, mAccelrations, dt);
-        //Dynamics.Integrate(positions, velocities, dt);
-        //
-        //List<Manifold> collisions = Collision.Collisions(positions, mColliders);
+        List<Vector3> velocities = new List<Vector3>(mVelocities);
+        List<Vector3> positions = new List<Vector3>(mPositions);
+        Dynamics.Integrate(velocities, mAccelrations, dt);
+        Dynamics.Integrate(positions, velocities, dt);
+        
+        // This backwards step works, but a little too well...
+        // If there's no collision, it adds counter-force such that there's no movement!
+        List<Manifold> collisions = Collision.Collisions(positions, mColliders);
+        List<Vector3> resolvedPositions = new List<Vector3>(positions);
+        Collision.ResolvePositions(resolvedPositions, mColliders, collisions);
+        List<Vector3> resolvedVelocities = Dynamics.Differentiate(positions, resolvedPositions, dt);
+        List<Vector3> resolvedAccelerations = Dynamics.Differentiate(velocities, resolvedVelocities, dt);
+        for (int i = 0; i < mAccelrations.Count; i++)
+            mAccelrations[i] += resolvedAccelerations[i];
 
         // (Pure-Force engine would run its 2nd step here instead of continuing integration)
         Dynamics.Integrate(mVelocities, mAccelrations, dt);
         Dynamics.Integrate(mPositions, mVelocities, dt);
 
         // Resolve penetration
-        Collision.ResolvePositions(mPositions, mColliders, Collision.Collisions(mPositions, mColliders));
+        //Collision.ResolvePositions(mPositions, mColliders, Collision.Collisions(mPositions, mColliders));
 
         // Reset net forces
         for (int i = 0; i < mNetForces.Count; i++)
@@ -182,6 +190,16 @@ public class PhysicsWorld
     // Gotta put everything in the same file if I want my typedefs...
     public static class Dynamics
     {
+        public static List<Vector3> Differentiate(List<Vector3> initial, List<Vector3> final, float dt)
+        {
+            List<Vector3> delta = new List<Vector3>(initial.Count);
+            for (int i = 0; i < initial.Count; i++)
+            {
+                delta.Add((final[i] - initial[i]) / dt);
+            }
+            return delta;
+        }
+
         public static void Integrate(List<Vector3> output, List<Vector3> input, float dt)
         {
             for (int i = 0; i < input.Count; i++)
@@ -211,7 +229,7 @@ public class PhysicsWorld
                 for (int j = i + 1; j < positions.Count; j++)
                 {
                     Mtv mtv = new Mtv();
-                    if (Collision.Check(positions[i], colliders[i], positions[j], colliders[j], mtv))
+                    if (Check(positions[i], colliders[i], positions[j], colliders[j], mtv))
                     {
                         if (!colliders[i].dynamic && colliders[j].dynamic)
                         {
@@ -225,6 +243,27 @@ public class PhysicsWorld
             }
             return collisions;
         }
+
+        // Accepts list of integrated positions. Works backwards from there
+        //public static void ResolveForces(List<Vector3> positions, List<Vector3> accelerations,
+        //    List<Collider> colliders)
+        //{
+        //
+        //    List<Manifold> collisions = Collisions(positions, colliders);
+        //    foreach (Manifold collision in collisions)
+        //    {
+        //        Vector3 mtv = collision.mtv.normal * collision.mtv.depth;
+        //        if (colliders[collision.b].dynamic)
+        //        {
+        //            positions[collision.a] += mtv * 0.5f;
+        //            positions[collision.b] -= mtv * 0.5f;
+        //        }
+        //        else
+        //        {
+        //            positions[collision.a] += mtv;
+        //        }
+        //    }
+        //}
 
         public static void ResolvePositions(List<Vector3> positions, List<Collider> colliders,
             List<Manifold> collisions)
@@ -259,7 +298,7 @@ public class PhysicsWorld
             return false;
         }
 
-        public static bool SphereSphere(
+        static bool SphereSphere(
             Vector3 position1, float radius1, Vector3 position2, float radius2, Mtv mtv = null)
         {
             Vector3 direction = position1 - position2;
@@ -275,7 +314,7 @@ public class PhysicsWorld
             return collision;
         }
 
-        public static bool SpherePlane(
+        static bool SpherePlane(
             Vector3 spherePosition, float sphereRadius, Vector3 planePosition, Vector3 planeNormal, Mtv mtv = null)
         {
             float distance = Vector3.Dot(spherePosition - planePosition, planeNormal);
