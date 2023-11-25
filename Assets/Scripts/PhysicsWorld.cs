@@ -9,7 +9,6 @@ public struct Particle
 
     public float gravityScale;
     public float mass;
-    public bool moves;
 
     public Collider collider;
 
@@ -23,6 +22,7 @@ public class Collider
     public Shape shape;     // SPHERE or PLANE
     public float radius;    // if SPHERE, radius will have a value
     public Vector3 normal;  // if PLANE,  normal will have a value
+    public bool dynamic;
 }
 
 public enum Shape
@@ -65,9 +65,8 @@ public class PhysicsWorld
         mAccelrations.Add(Vector3.zero);
         mNetForces.Add(Vector3.zero);
 
-        mInvMasses.Add(p.moves ? 1.0f / p.mass : 0.0f);
+        mInvMasses.Add(p.collider.dynamic ? 1.0f / p.mass : 0.0f);
         mGravityScales.Add(p.gravityScale);
-        mMovements.Add(p.moves);
 
         mColliders.Add(p.collider);
     }
@@ -84,7 +83,6 @@ public class PhysicsWorld
         mNetForces.RemoveAt(index);
         mInvMasses.RemoveAt(index);
         mGravityScales.RemoveAt(index);
-        mMovements.RemoveAt(index);
 
         mColliders.RemoveAt(index);
         links.Remove(obj);
@@ -150,59 +148,25 @@ public class PhysicsWorld
 
         // 2. Accumnulate gravitational force
         for (int i = 0; i < mAccelrations.Count; i++)
-            mAccelrations[i] += gravity * mInvMasses[i] * mGravityScales[i];
+            mAccelrations[i] += gravity * mGravityScales[i];
+
+        //List<Vector3> velocities = new List<Vector3>(mVelocities);
+        //List<Vector3> positions = new List<Vector3>(mPositions);
+        //Dynamics.Integrate(velocities, mAccelrations, dt);
+        //Dynamics.Integrate(positions, velocities, dt);
+        //
+        //List<Manifold> collisions = Collision.Collisions(positions, mColliders);
 
         // (Pure-Force engine would run its 2nd step here instead of continuing integration)
         Dynamics.Integrate(mVelocities, mAccelrations, dt);
         Dynamics.Integrate(mPositions, mVelocities, dt);
 
         // Resolve penetration
-        List<Manifold> collisions = Collisions(0, mPositions.Count);
-        ResolvePositions(collisions);
+        Collision.ResolvePositions(mPositions, mColliders, Collision.Collisions(mPositions, mColliders));
 
         // Reset net forces
         for (int i = 0; i < mNetForces.Count; i++)
             mNetForces[i] = Vector3.zero;
-    }
-
-    List<Manifold> Collisions(int start, int end)
-    {
-        List<Manifold>collisions = new List<Manifold>();
-        for (int i = start; i < end; i++)
-        {
-            for (int j = start + 1; j < end; j++)
-            {
-                Mtv mtv = new Mtv();
-                if (Collision.Check(mPositions[i], mColliders[i], mPositions[j], mColliders[j], mtv))
-                {
-                    if (!mMovements[i] && mMovements[j])
-                    {
-                        mtv.normal *= 1.0f;
-                        collisions.Add(new Manifold() { a = j, b = i, mtv = mtv });
-                    }
-                    else
-                        collisions.Add(new Manifold() { a = i, b = j, mtv = mtv });
-                }
-            }
-        }
-        return collisions;
-    }
-
-    void ResolvePositions(List<Manifold> collisions)
-    {
-        foreach (Manifold collision in collisions)
-        {
-            Vector3 mtv = collision.mtv.normal * collision.mtv.depth;
-            if (mMovements[collision.b])
-            {
-                mPositions[collision.a] += mtv * 0.5f;
-                mPositions[collision.b] -= mtv * 0.5f;
-            }
-            else
-            {
-                mPositions[collision.a] += mtv;
-            }
-        }
     }
 
     List<Vector3> mPositions = new List<Vector3>();
@@ -212,7 +176,6 @@ public class PhysicsWorld
     List<Vector3> mNetForces = new List<Vector3>();
     List<float> mInvMasses = new List<float>();
     List<float> mGravityScales = new List<float>();
-    List<bool> mMovements = new List<bool>();
 
     List<Collider> mColliders = new List<Collider>();
 
@@ -240,6 +203,47 @@ public class PhysicsWorld
     // Essentially the same as Collision, but as an inner class of PhysicsWorld
     public static class Collision
     {
+        public static List<Manifold> Collisions(List<Vector3> positions, List<Collider> colliders)
+        {
+            List<Manifold> collisions = new List<Manifold>();
+            for (int i = 0; i < positions.Count; i++)
+            {
+                for (int j = i + 1; j < positions.Count; j++)
+                {
+                    Mtv mtv = new Mtv();
+                    if (Collision.Check(positions[i], colliders[i], positions[j], colliders[j], mtv))
+                    {
+                        if (!colliders[i].dynamic && colliders[j].dynamic)
+                        {
+                            mtv.normal *= 1.0f;
+                            collisions.Add(new Manifold() { a = j, b = i, mtv = mtv });
+                        }
+                        else
+                            collisions.Add(new Manifold() { a = i, b = j, mtv = mtv });
+                    }
+                }
+            }
+            return collisions;
+        }
+
+        public static void ResolvePositions(List<Vector3> positions, List<Collider> colliders,
+            List<Manifold> collisions)
+        {
+            foreach (Manifold collision in collisions)
+            {
+                Vector3 mtv = collision.mtv.normal * collision.mtv.depth;
+                if (colliders[collision.b].dynamic)
+                {
+                    positions[collision.a] += mtv * 0.5f;
+                    positions[collision.b] -= mtv * 0.5f;
+                }
+                else
+                {
+                    positions[collision.a] += mtv;
+                }
+            }
+        }
+
         public static bool Check(
             Vector3 position1, Collider collider1, Vector3 position2, Collider collider2, Mtv mtv = null)
         {

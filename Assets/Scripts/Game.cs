@@ -20,9 +20,8 @@ public class Game2 : MonoBehaviour
         //        vel = Vector3.zero,
         //        mass = 1.0f,
         //        gravityScale = 0.25f,
-        //        moves = true,
         //
-        //        collider = new Collider { shape = Shape2.SPHERE, radius = 0.5f  }
+        //        collider = new Collider { shape = Shape.SPHERE, radius = 0.5f, dynamic = true }
         //    };
         //    world.Add(sphere, sphereData);
         //}
@@ -35,9 +34,8 @@ public class Game2 : MonoBehaviour
                 vel = Vector3.zero,
                 mass = 1.0f,
                 gravityScale = 1.0f,
-                moves = true,
 
-                collider = new Collider { shape = Shape.SPHERE, radius = 0.5f }
+                collider = new Collider { shape = Shape.SPHERE, radius = 0.5f, dynamic = true }
             };
             world.Add(sphere, sphereData);
         }
@@ -50,9 +48,8 @@ public class Game2 : MonoBehaviour
                 vel = new Vector3(1.0f, 0.0f, 0.0f),
                 mass = 1.0f,
                 gravityScale = 1.0f,
-                moves = true,
 
-                collider = new Collider { shape = Shape.SPHERE, radius = 0.5f }
+                collider = new Collider { shape = Shape.SPHERE, radius = 0.5f, dynamic = true }
             };
             world.Add(sphere, sphereData);
         }
@@ -66,9 +63,8 @@ public class Game2 : MonoBehaviour
                 vel = Vector3.zero,
                 mass = 1.0f,
                 gravityScale = 0.0f,
-                moves = false,
 
-                collider = new Collider { shape = Shape.PLANE, normal = Vector3.up }
+                collider = new Collider { shape = Shape.PLANE, normal = Vector3.up, dynamic = false }
             };
             world.Add(plane, planeData);
         }
