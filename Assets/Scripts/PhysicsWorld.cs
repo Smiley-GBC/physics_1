@@ -59,7 +59,6 @@ public class PhysicsWorld
         links.Add(obj, links.Count);
 
         mPositions.Add(p.pos);
-        mPositions0.Add(p.pos);
         mVelocities.Add(p.vel);
         mAccelrations.Add(p.acc);
         mNetForces.Add(Vector3.zero);
@@ -79,7 +78,6 @@ public class PhysicsWorld
         links.Remove(obj);
 
         mPositions.RemoveAt(index);
-        mPositions0.RemoveAt(index);
         mVelocities.RemoveAt(index);
         mAccelrations.RemoveAt(index);
         mNetForces.RemoveAt(index);
@@ -171,8 +169,7 @@ public class PhysicsWorld
         Dynamics.ResolvePositions(mPositions, mColliders, collisions);
     }
 
-    List<Vector3> mPositions = new List<Vector3>();     // Current positions
-    List<Vector3> mPositions0 = new List<Vector3>();    // Previous positions
+    List<Vector3> mPositions = new List<Vector3>();
     List<Vector3> mVelocities = new List<Vector3>();
     List<Vector3> mAccelrations = new List<Vector3>();
     List<Vector3> mNetForces = new List<Vector3>();
@@ -200,16 +197,6 @@ public class PhysicsWorld
         public static Vector3 Integrate(Vector3 value, Vector3 change, float dt)
         {
             return value + change * dt;
-        }
-
-        public static void Verlet(List<Vector3> positions, List<Vector3> positions0,
-            /*List<Vector3> velocities,*/ List<Vector3> accelerations, float dt)
-        {
-
-            for (int i = 0; i < accelerations.Count; i++)
-            {
-
-            }
         }
 
         public static void ResolveVelocities(
