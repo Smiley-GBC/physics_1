@@ -67,7 +67,14 @@ public class PhysicsWorld
 
         mPositions.Add(p.pos);
         mPositions0.Add(p.pos);
+
         mVelocities.Add(p.vel);
+        if (integrator == Integrator.VERLET)
+        {
+            mPositions0[links[obj]] = mPositions[links[obj]] - (p.vel * timestep);
+            mVelocities[links[obj]] = Vector3.zero;
+        }
+
         mAccelrations.Add(p.acc);
         mNetForces.Add(Vector3.zero);
 

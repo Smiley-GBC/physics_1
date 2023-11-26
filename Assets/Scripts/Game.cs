@@ -8,6 +8,8 @@ public class Game : MonoBehaviour
 
     void Start()
     {
+        world.integrator = Integrator.VERLET;
+
         // Left sphere moving right that will stop bouncing and come to rest
         {
             GameObject sphere = Instantiate(spherePrefab);
