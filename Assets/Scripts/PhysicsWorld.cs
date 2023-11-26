@@ -59,6 +59,7 @@ public class PhysicsWorld
         links.Add(obj, links.Count);
 
         mPositions.Add(p.pos);
+        mPositions0.Add(p.pos);
         mVelocities.Add(p.vel);
         mAccelrations.Add(p.acc);
         mNetForces.Add(Vector3.zero);
@@ -78,6 +79,7 @@ public class PhysicsWorld
         links.Remove(obj);
 
         mPositions.RemoveAt(index);
+        mPositions0.RemoveAt(index);
         mVelocities.RemoveAt(index);
         mAccelrations.RemoveAt(index);
         mNetForces.RemoveAt(index);
@@ -144,25 +146,33 @@ public class PhysicsWorld
 
     void Simulate(float dt)
     {
-        // 1. Apply net force (Fa + Fg) as acceleration, then reset net force
-        for (int i = 0; i < mAccelrations.Count; i++)
+        // 1. Apply motion
+        for (int i = 0; i < mNetForces.Count; i++)
         {
+            // Apply user force
             mAccelrations[i] = mNetForces[i] * mInvMasses[i];
+
+            // Apply gravitational force
             mAccelrations[i] += gravity * mGravityScales[i];
+
+            // Apply acceleration to velocity
+            mVelocities[i] = Dynamics.Integrate(mVelocities[i], mAccelrations[i], dt);
+
+            // Apply velocity to position
+            mPositions[i] = Dynamics.Integrate(mPositions[i], mVelocities[i], dt);
+
+            // Reset net force
             mNetForces[i] = Vector3.zero;
         }
 
-        // 2. Integrate velocities and positions
-        Dynamics.Integrate(mVelocities, mAccelrations, dt);
-        Dynamics.Integrate(mPositions, mVelocities, dt);
-
-        // 3. Resolve collisions
+        // 2. Correct motion & position
         List<Manifold> collisions = Collision.Collisions(mPositions, mColliders);
         Dynamics.ResolveVelocities(mVelocities, mInvMasses, mFrictions, mRestitutions, collisions);
         Dynamics.ResolvePositions(mPositions, mColliders, collisions);
     }
 
-    List<Vector3> mPositions = new List<Vector3>();
+    List<Vector3> mPositions = new List<Vector3>();     // Current positions
+    List<Vector3> mPositions0 = new List<Vector3>();    // Previous positions
     List<Vector3> mVelocities = new List<Vector3>();
     List<Vector3> mAccelrations = new List<Vector3>();
     List<Vector3> mNetForces = new List<Vector3>();
@@ -176,21 +186,29 @@ public class PhysicsWorld
 
     public static class Dynamics
     {
-        public static List<Vector3> Differentiate(List<Vector3> initial, List<Vector3> final, float dt)
+        // "Compute the rate of change"
+        // Ex: solve for v given pi = 5m, pf = 10m, and t = 2s
+        // v = (pf - pi) / t --> v = (10 - 5) / 2 --> v = 2.5m/s
+        public static Vector3 Differentiate(Vector3 final, Vector3 initial, float dt)
         {
-            List<Vector3> delta = new List<Vector3>(initial.Count);
-            for (int i = 0; i < initial.Count; i++)
-            {
-                delta.Add((final[i] - initial[i]) / dt);
-            }
-            return delta;
+            return (final - initial) / dt;
         }
 
-        public static void Integrate(List<Vector3> output, List<Vector3> input, float dt)
+        // "Apply the rate of change"
+        // Ex: solve for pf given pi = 5m, vi = 2.5m/s, and t = 2s 
+        // pf = pi + vi * t --> pf = 5 + 2.5 * 2 --> pf = 10m
+        public static Vector3 Integrate(Vector3 value, Vector3 change, float dt)
         {
-            for (int i = 0; i < input.Count; i++)
+            return value + change * dt;
+        }
+
+        public static void Verlet(List<Vector3> positions, List<Vector3> positions0,
+            /*List<Vector3> velocities,*/ List<Vector3> accelerations, float dt)
+        {
+
+            for (int i = 0; i < accelerations.Count; i++)
             {
-                output[i] += input[i] * dt;
+
             }
         }
 
