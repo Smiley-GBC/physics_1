@@ -43,8 +43,15 @@ public class Mtv
     public float depth;
 }
 
+public enum Integrator
+{
+    EULER,
+    VERLET
+}
+
 public class PhysicsWorld
 {
+    public Integrator integrator;
     Vector3 gravity = new Vector3(0.0f, -9.81f, 0.0f);
     float timestep = 1.0f / 50.0f;
     float prevTime = 0.0f;
@@ -146,23 +153,44 @@ public class PhysicsWorld
 
     void Simulate(float dt)
     {
-        // 1. Apply motion
-        for (int i = 0; i < mNetForces.Count; i++)
+        if (integrator == Integrator.EULER)
         {
-            // Apply user force
-            mAccelrations[i] = mNetForces[i] * mInvMasses[i];
+            // 1. Apply motion
+            for (int i = 0; i < mNetForces.Count; i++)
+            {
+                // Apply user force
+                mAccelrations[i] = mNetForces[i] * mInvMasses[i];
 
-            // Apply gravitational force
-            mAccelrations[i] += gravity * mGravityScales[i];
+                // Apply gravitational force
+                mAccelrations[i] += gravity * mGravityScales[i];
 
-            // Apply acceleration to velocity
-            mVelocities[i] = Dynamics.Integrate(mVelocities[i], mAccelrations[i], dt);
+                // Apply acceleration to velocity
+                mVelocities[i] = Dynamics.Integrate(mVelocities[i], mAccelrations[i], dt);
 
-            // Apply velocity to position
-            mPositions[i] = Dynamics.Integrate(mPositions[i], mVelocities[i], dt);
+                // Apply velocity to position
+                mPositions[i] = Dynamics.Integrate(mPositions[i], mVelocities[i], dt);
 
-            // Reset net force
-            mNetForces[i] = Vector3.zero;
+                // Reset net force
+                mNetForces[i] = Vector3.zero;
+            }
+        }
+        else
+        {
+            // 1. Apply motion
+            for (int i = 0; i < mNetForces.Count; i++)
+            {
+                // Apply user force
+                mAccelrations[i] = mNetForces[i] * mInvMasses[i];
+
+                // Apply gravitational force
+                mAccelrations[i] += gravity * mGravityScales[i];
+
+                // Integrate displacement & acceleration, then derive velocity
+                Dynamics.Verlet(mPositions, mPositions0, mVelocities, mAccelrations, dt);
+
+                // Reset net force
+                mNetForces[i] = Vector3.zero;
+            }
         }
 
         // 2. Correct motion & position
@@ -173,6 +201,7 @@ public class PhysicsWorld
 
     List<Vector3> mPositions = new List<Vector3>();     // Current positions
     List<Vector3> mPositions0 = new List<Vector3>();    // Previous positions
+
     List<Vector3> mVelocities = new List<Vector3>();
     List<Vector3> mAccelrations = new List<Vector3>();
     List<Vector3> mNetForces = new List<Vector3>();
@@ -203,12 +232,14 @@ public class PhysicsWorld
         }
 
         public static void Verlet(List<Vector3> positions, List<Vector3> positions0,
-            /*List<Vector3> velocities,*/ List<Vector3> accelerations, float dt)
+            List<Vector3> velocities, List<Vector3> accelerations, float dt)
         {
-
             for (int i = 0; i < accelerations.Count; i++)
             {
-
+                Vector3 displacement = positions[i] - positions0[i];
+                positions0[i] = positions[i];
+                positions[i] = positions[i] + displacement + accelerations[i] * dt * dt;
+                velocities[i] = displacement / dt;
             }
         }
 
