@@ -49,6 +49,9 @@ public enum Integrator
     VERLET
 }
 
+// TODO -- if I want multiple integrators, then I'll have to make an interface to account for
+// different methods of manipulating velocity --> Euler = velocity, Verlet = (pos - pos0) / dt
+// If I want re-use between ResolveVelocities and ResolvePositions, then I need to use interface
 public class PhysicsWorld
 {
     public Integrator integrator;
@@ -172,14 +175,19 @@ public class PhysicsWorld
                 mAccelrations[i] += gravity * mGravityScales[i];
 
                 // Apply acceleration to velocity
-                mVelocities[i] = Dynamics.Integrate(mVelocities[i], mAccelrations[i], dt);
+                mVelocities[i] = Euler.Integrate(mVelocities[i], mAccelrations[i], dt);
 
                 // Apply velocity to position
-                mPositions[i] = Dynamics.Integrate(mPositions[i], mVelocities[i], dt);
+                mPositions[i] = Euler.Integrate(mPositions[i], mVelocities[i], dt);
 
                 // Reset net force
                 mNetForces[i] = Vector3.zero;
             }
+
+            // 2. Correct motion & position
+            List<Manifold> collisions = Collision.Collisions(mPositions, mColliders);
+            Euler.ResolveVelocities(mVelocities, mInvMasses, mFrictions, mRestitutions, collisions);
+            Euler.ResolvePositions(mPositions, mColliders, collisions);
         }
         else
         {
@@ -193,17 +201,17 @@ public class PhysicsWorld
                 mAccelrations[i] += gravity * mGravityScales[i];
 
                 // Integrate displacement & acceleration, then derive velocity
-                Dynamics.Verlet(mPositions, mPositions0, mVelocities, mAccelrations, dt);
+                Verlet.ApplyMotion(mPositions, mPositions0, mVelocities, mAccelrations, i, dt);
 
                 // Reset net force
                 mNetForces[i] = Vector3.zero;
             }
-        }
 
-        // 2. Correct motion & position
-        List<Manifold> collisions = Collision.Collisions(mPositions, mColliders);
-        Dynamics.ResolveVelocities(mVelocities, mInvMasses, mFrictions, mRestitutions, collisions);
-        Dynamics.ResolvePositions(mPositions, mColliders, collisions);
+            // TODO -- Make verlet-based velocity & position resolution algorithms
+            List<Manifold> collisions = Collision.Collisions(mPositions, mColliders);
+            Euler.ResolveVelocities(mVelocities, mInvMasses, mFrictions, mRestitutions, collisions);
+            Euler.ResolvePositions(mPositions, mColliders, collisions);
+        }
     }
 
     List<Vector3> mPositions = new List<Vector3>();     // Current positions
@@ -220,7 +228,7 @@ public class PhysicsWorld
 
     List<Collider> mColliders = new List<Collider>();
 
-    public static class Dynamics
+    public static class Euler
     {
         // "Compute the rate of change"
         // Ex: solve for v given pi = 5m, pf = 10m, and t = 2s
@@ -236,18 +244,6 @@ public class PhysicsWorld
         public static Vector3 Integrate(Vector3 value, Vector3 change, float dt)
         {
             return value + change * dt;
-        }
-
-        public static void Verlet(List<Vector3> positions, List<Vector3> positions0,
-            List<Vector3> velocities, List<Vector3> accelerations, float dt)
-        {
-            for (int i = 0; i < accelerations.Count; i++)
-            {
-                Vector3 displacement = positions[i] - positions0[i];
-                positions0[i] = positions[i];
-                positions[i] = positions[i] + displacement + accelerations[i] * dt * dt;
-                velocities[i] = displacement / dt;
-            }
         }
 
         public static void ResolveVelocities(
@@ -306,6 +302,21 @@ public class PhysicsWorld
                 }
             }
         }
+    }
+
+    public static class Verlet
+    {
+        public static void ApplyMotion(List<Vector3> positions, List<Vector3> positions0,
+            List<Vector3> velocities, List<Vector3> accelerations, int i, float dt)
+        {
+            Vector3 displacement = positions[i] - positions0[i];
+            positions0[i] = positions[i];
+            positions[i] = positions[i] + displacement + accelerations[i] * dt * dt;
+            velocities[i] = displacement / dt;
+        }
+
+        // TODO -- ResolveVelocities
+        // TODO -- ResolvePositions
     }
 
     public static class Collision
