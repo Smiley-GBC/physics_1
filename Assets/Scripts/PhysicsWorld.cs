@@ -144,6 +144,36 @@ public class PhysicsWorld
 
     void Simulate(float dt)
     {
+        // Optimization -- load only relevant information into CPU cache:
+        int count = mNetForces.Count;
+
+        // 1. Accumulate acceleration
+        for (int i = 0; i < count; i++)
+        {
+            // Apply user force
+            mAccelrations[i] = mNetForces[i] * mInvMasses[i];
+
+            // Apply gravitational force
+            mAccelrations[i] += gravity * mGravityScales[i];
+
+            // Reset net force after acceleration has been deduced from force
+            mNetForces[i] = Vector3.zero;
+        }
+
+        // 2. Update velocity based on acceleration
+        for (int i = 0; i < count; i++)
+        {
+            // Apply acceleration to velocity
+            mVelocities[i] = Dynamics.Integrate(mVelocities[i], mAccelrations[i], dt);
+        }
+
+        // 3. Update position based on velocity
+        for (int i = 0; i < count; i++)
+        {
+            mPositions[i] = Dynamics.Integrate(mPositions[i], mVelocities[i], dt);
+        }
+
+        /*
         // 1. Apply motion
         for (int i = 0; i < mNetForces.Count; i++)
         {
@@ -161,7 +191,7 @@ public class PhysicsWorld
 
             // Reset net force
             mNetForces[i] = Vector3.zero;
-        }
+        }*/
 
         // 2. Correct motion & position
         List<Manifold> collisions = Collision.Collisions(mPositions, mColliders);
@@ -271,7 +301,7 @@ public class PhysicsWorld
                     {
                         if (!colliders[i].dynamic && colliders[j].dynamic)
                         {
-                            mtv.normal *= 1.0f;
+                            mtv.normal *= -1.0f;
                             collisions.Add(new Manifold() { a = j, b = i, mtv = mtv });
                         }
                         else
