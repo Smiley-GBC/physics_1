@@ -8,27 +8,7 @@ public class Game : MonoBehaviour
 
     void Start()
     {
-        // Left sphere moving right that will stop bouncing and come to rest
-        {
-            GameObject sphere = Instantiate(spherePrefab);
-            Particle sphereData = new Particle
-            {
-                pos = new Vector3(-3.0f, 0.5f, 0.0f),
-                vel = new Vector3(3.0f, 0.0f, 0.0f),
-                acc = Vector3.zero,
-
-                mass = 1.0f,
-                gravityScale = 1.0f,
-
-                collider = new Collider { shape = Shape.SPHERE, radius = 0.5f, dynamic = true },
-
-                friction = 0.5f,
-                restitution = 0.5f
-            };
-            world.Add(sphere, sphereData);
-        }
-
-        // Right sphere that will ricochet off left sphere then continue to move and bounce
+        // Right sphere that will bounce off left sphere then slowly comes to rest
         {
             GameObject sphere = Instantiate(spherePrefab);
             Particle sphereData = new Particle
@@ -42,8 +22,28 @@ public class Game : MonoBehaviour
 
                 collider = new Collider { shape = Shape.SPHERE, radius = 0.5f, dynamic = true },
 
-                friction = 0.0f,
-                restitution = 1.0f
+                friction = 0.01f,
+                restitution = 0.75f
+            };
+            world.Add(sphere, sphereData);
+        }
+
+        // Left sphere moving right that will quickly stop bouncing and come to rest
+        {
+            GameObject sphere = Instantiate(spherePrefab);
+            Particle sphereData = new Particle
+            {
+                pos = new Vector3(-3.0f, 0.5f, 0.0f),
+                vel = new Vector3( 3.0f, 0.0f, 0.0f),
+                acc = Vector3.zero,
+
+                mass = 1.0f,
+                gravityScale = 1.0f,
+
+                collider = new Collider { shape = Shape.SPHERE, radius = 0.5f, dynamic = true },
+
+                friction = 0.5f,
+                restitution = 0.5f
             };
             world.Add(sphere, sphereData);
         }
