@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 public struct Particle
 {
@@ -53,6 +54,12 @@ public class PhysicsWorld
     // Key is GameObject hash
     // Val is index of physics properties
     Dictionary<GameObject, int> links = new Dictionary<GameObject, int>();
+
+    public int Get(GameObject obj)
+    {
+        Assert.IsTrue(links.ContainsKey(obj));
+        return links[obj];
+    }
 
     public void Add(GameObject obj, Particle p)
     {
@@ -169,17 +176,17 @@ public class PhysicsWorld
         Dynamics.ResolvePositions(mPositions, mColliders, collisions);
     }
 
-    List<Vector3> mPositions = new List<Vector3>();
-    List<Vector3> mVelocities = new List<Vector3>();
-    List<Vector3> mAccelrations = new List<Vector3>();
-    List<Vector3> mNetForces = new List<Vector3>();
+    public List<Vector3> mPositions = new List<Vector3>();
+    public List<Vector3> mVelocities = new List<Vector3>();
+    public List<Vector3> mAccelrations = new List<Vector3>();
+    public List<Vector3> mNetForces = new List<Vector3>();
 
-    List<float> mInvMasses = new List<float>();
-    List<float> mGravityScales = new List<float>();
-    List<float> mFrictions = new List<float>();
-    List<float> mRestitutions = new List<float>();
+    public List<float> mInvMasses = new List<float>();
+    public List<float> mGravityScales = new List<float>();
+    public List<float> mFrictions = new List<float>();
+    public List<float> mRestitutions = new List<float>();
 
-    List<Collider> mColliders = new List<Collider>();
+    public List<Collider> mColliders = new List<Collider>();
 
     public static class Dynamics
     {
