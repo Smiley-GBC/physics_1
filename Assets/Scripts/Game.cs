@@ -13,6 +13,11 @@ public class Game : MonoBehaviour
 
     public GameObject test;
 
+    void OnBirdCollision(Manifold manifold)
+    {
+        world.mPositions[manifold.a] += new Vector3(0.0f, 1.0f, 0.0f);
+    }
+
     void Start()
     {
         CapsuleCollider launcherCollider = launcher.GetComponent<CapsuleCollider>();
@@ -62,16 +67,18 @@ public class Game : MonoBehaviour
         Particle sphereData = new Particle
         {
             pos = new Vector3(-5.0f, 2.5f, 0.0f),
-            vel = new Vector3( 0.0f, 0.0f, 0.0f),
+            vel = new Vector3(0.0f, 0.0f, 0.0f),
             acc = Vector3.zero,
-        
+
             mass = 1.0f,
             gravityScale = 0.0f,
-        
+
             collider = new Collider { shape = Shape.SPHERE, radius = 0.5f, dynamic = true },
-            
-            friction = 0.0f,
-            restitution = 0.5f
+
+            friction = 0.01f,
+            restitution = 0.5f,
+
+            onCollision = OnBirdCollision
         };
         world.Add(bird, sphereData);
 

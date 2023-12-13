@@ -15,6 +15,7 @@ public struct Particle
     public float restitution;
 
     public Collider collider;
+    public BirdCollision onCollision;
 }
 
 public class Collider
@@ -43,6 +44,8 @@ public class Mtv
     public Vector3 normal;
     public float depth;
 }
+
+public delegate void BirdCollision(Manifold collision);
 
 public class PhysicsWorld
 {
@@ -76,6 +79,7 @@ public class PhysicsWorld
         mRestitutions.Add(p.restitution);
 
         mColliders.Add(p.collider);
+        mCallbacks.Add(p.onCollision);
     }
 
     public void Remove(GameObject obj)
@@ -174,6 +178,13 @@ public class PhysicsWorld
         List<Manifold> collisions = Collision.Collisions(mPositions, mColliders);
         Dynamics.ResolveVelocities(mVelocities, mInvMasses, mFrictions, mRestitutions, collisions);
         Dynamics.ResolvePositions(mPositions, mColliders, collisions);
+        foreach (var collision in collisions)
+        {
+            if (mCallbacks[collision.a] != null)
+                mCallbacks[collision.a](collision);
+            if (mCallbacks[collision.b] != null)
+                mCallbacks[collision.b](collision);
+        }
     }
 
     public List<Vector3> mPositions = new List<Vector3>();
@@ -187,6 +198,7 @@ public class PhysicsWorld
     public List<float> mRestitutions = new List<float>();
 
     public List<Collider> mColliders = new List<Collider>();
+    public List<BirdCollision> mCallbacks = new List<BirdCollision>();
 
     public static class Dynamics
     {
