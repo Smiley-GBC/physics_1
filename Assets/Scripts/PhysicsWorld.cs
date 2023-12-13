@@ -3,6 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Assertions;
 
+public enum Tag
+{
+    BIRD,
+    PIG,
+    WALL
+}
+
 public struct Particle
 {
     public Vector3 pos;
@@ -16,6 +23,7 @@ public struct Particle
 
     public Collider collider;
     public BirdCollision onCollision;
+    public Tag tag;
 }
 
 public class Collider
@@ -80,6 +88,7 @@ public class PhysicsWorld
 
         mColliders.Add(p.collider);
         mCallbacks.Add(p.onCollision);
+        mTags.Add(p.tag);
     }
 
     public void Remove(GameObject obj)
@@ -99,6 +108,8 @@ public class PhysicsWorld
         mRestitutions.RemoveAt(index);
 
         mColliders.RemoveAt(index);
+        mCallbacks.RemoveAt(index);
+        mTags.RemoveAt(index);
     }
 
     // Simulate physics at the frequency of timestep (aka run FixedUpdate)
@@ -147,9 +158,10 @@ public class PhysicsWorld
         foreach (var pair in links)
         {
             GameObject obj = pair.Key;
-            Color color = collisions[pair.Value] ? Color.red : Color.green;
-            obj.GetComponent<Renderer>().material.color = color;
             obj.transform.position = mPositions[pair.Value];
+            // No longer coloring based on collision status since this is now Angry Birds (TM) instead of Connor's jank engine
+            //Color color = collisions[pair.Value] ? Color.red : Color.green;
+            //obj.GetComponent<Renderer>().material.color = color;
         }
     }
 
@@ -199,6 +211,7 @@ public class PhysicsWorld
 
     public List<Collider> mColliders = new List<Collider>();
     public List<BirdCollision> mCallbacks = new List<BirdCollision>();
+    public List<Tag> mTags = new List<Tag>();
 
     public static class Dynamics
     {
