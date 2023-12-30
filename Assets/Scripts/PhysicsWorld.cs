@@ -2,45 +2,17 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public struct Particle
-{
-    public Vector3 pos;
-    public Vector3 vel;
-    public Vector3 acc;
-
-    public float gravityScale;
-    public float mass;
-    public float friction;
-    public float restitution;
-
-    public Collider collider;
-}
-
-public class Collider
-{
-    public Shape shape;     // SPHERE or PLANE
-    public float radius;    // if SPHERE, radius will have a value
-    public Vector3 normal;  // if PLANE,  normal will have a value
-    public bool dynamic;
-}
-
-public enum Shape
-{
-    SPHERE,
-    PLANE
-}
-
-public class Manifold
-{
-    public int a = -1;
-    public int b = -1;
-    public Mtv mtv = null;
-}
-
 public class Mtv
 {
     public Vector3 normal;
     public float depth;
+}
+
+public class Manifold
+{
+    public PhysicsObject a = null;
+    public PhysicsObject b = null;
+    public Mtv mtv = null;
 }
 
 public class PhysicsWorld
@@ -50,136 +22,82 @@ public class PhysicsWorld
     float prevTime = 0.0f;
     float currTime = 0.0f;
 
-    // Key is GameObject hash
-    // Val is index of physics properties
-    Dictionary<GameObject, int> links = new Dictionary<GameObject, int>();
+    List<GameObject> objects = new List<GameObject>();
 
-    public void Add(GameObject obj, Particle p)
+    void Add(GameObject obj)
     {
-        links.Add(obj, links.Count);
-
-        mPositions.Add(p.pos);
-        mVelocities.Add(p.vel);
-        mAccelrations.Add(p.acc);
-        mNetForces.Add(Vector3.zero);
-
-        mInvMasses.Add(p.collider.dynamic ? 1.0f / p.mass : 0.0f);
-        mGravityScales.Add(p.gravityScale);
-        mFrictions.Add(p.friction);
-        mRestitutions.Add(p.restitution);
-
-        mColliders.Add(p.collider);
+        objects.Add(obj);
     }
 
-    public void Remove(GameObject obj)
+    void Remove(GameObject obj)
     {
-        // TODO -- swap key-value pair with last element
-        int index = links[obj];
-        links.Remove(obj);
-
-        mPositions.RemoveAt(index);
-        mVelocities.RemoveAt(index);
-        mAccelrations.RemoveAt(index);
-        mNetForces.RemoveAt(index);
-
-        mInvMasses.RemoveAt(index);
-        mGravityScales.RemoveAt(index);
-        mFrictions.RemoveAt(index);
-        mRestitutions.RemoveAt(index);
-
-        mColliders.RemoveAt(index);
+        objects.Remove(obj);
+        Object.Destroy(obj);
     }
 
-    // Simulate physics at the frequency of timestep (aka run FixedUpdate)
+    void Clear()
+    {
+        foreach (GameObject obj in objects)
+            Object.Destroy(obj);
+        objects.Clear();
+    }
+
+    // Unity is already slow and this physics engine ain't AAA,
+    // so its easier to query all components every frame vs
+    // maintaining some nonsensical Physics-to-GameObject data-structure...
     public void Update(float dt)
     {
+        // Fetch physics components and step physics simulation
+        PhysicsObject[] physicsObjects = Object.FindObjectsOfType<PhysicsObject>();
         while (prevTime < currTime)
         {
             prevTime += timestep;
-            Simulate(timestep);
+            Simulate(physicsObjects, timestep);
         }
         currTime += dt;
-    }
 
-    // Write collider geometry from Unity to Engine
-    public void PreUpdate()
-    {
-        foreach (var pair in links)
+        // Determine collisions
+        List<bool> collisions = new List<bool>(new bool[physicsObjects.Length]);
+        for (int i = 0; i < physicsObjects.Length; i++)
         {
-            Collider collider = mColliders[pair.Value];
-            switch (collider.shape)
-            {
-                case Shape.SPHERE:
-                    collider.radius = pair.Key.transform.localScale.x * 0.5f;
-                    break;
-
-                case Shape.PLANE:
-                    collider.normal = pair.Key.transform.up;
-                    break;
-            }
-        }
-    }
-
-    // Write position from Engine to Unity and update color based on collision status
-    public void PostUpdate()
-    {
-        List<bool> collisions = new List<bool>(new bool[mPositions.Count]);
-        for (int i = 0; i < mPositions.Count; i++)
-        {
-            for (int j = i + 1; j < mPositions.Count; j++)
+            for (int j = i + 1; j < physicsObjects.Length; j++)
             {
                 collisions[i] |= collisions[j] |= Collision.Check(
-                    mPositions[i], mColliders[i], mPositions[j], mColliders[j]);
+                    physicsObjects[i].pos, physicsObjects[i].collider,
+                    physicsObjects[j].pos, physicsObjects[j].collider);
             }
         }
 
-        foreach (var pair in links)
+        // Write back positions & normals to/from game objects and render red/green for collision vs no collision
+        for (int i = 0; i < physicsObjects.Length; i++)
         {
-            GameObject obj = pair.Key;
-            Color color = collisions[pair.Value] ? Color.red : Color.green;
-            obj.GetComponent<Renderer>().material.color = color;
-            obj.transform.position = mPositions[pair.Value];
+            PhysicsObject obj = physicsObjects[i];
+            obj.gameObject.GetComponent<Renderer>().material.color = collisions[i] ? Color.red : Color.green;
+            obj.transform.position = obj.pos;
+            if (obj.collider.shape == Shape.PLANE)
+                obj.collider.normal = obj.transform.up;
         }
     }
 
-    void Simulate(float dt)
+    void Simulate(PhysicsObject[] physicsObjects, float dt)
     {
-        // Optimization -- load only relevant information into CPU cache:
-        int particleCount = mPositions.Count;
-
-        // 1. a = Fnet / m
-        for (int i = 0; i < particleCount; i++)
+        foreach (PhysicsObject obj in physicsObjects)
         {
-            mAccelrations[i] = mNetForces[i] * mInvMasses[i];   // Fa
-            mAccelrations[i] += gravity * mGravityScales[i];    // Fg
-            mNetForces[i] = Vector3.zero;
+            obj.acc = obj.fNet * obj.invMass;       // Fa
+            obj.acc += gravity * obj.gravityScale;  // Fg
+            obj.fNet = Vector3.zero;
+
+            obj.vel = Dynamics.Integrate(obj.vel, obj.acc, dt);
+            obj.pos = Dynamics.Integrate(obj.pos, obj.vel, dt);
         }
 
-        // 2. vf = vi + a * t
-        for (int i = 0; i < particleCount; i++)
-            mVelocities[i] = Dynamics.Integrate(mVelocities[i], mAccelrations[i], dt);
-
-        // 3. pf = pi + v * t
-        for (int i = 0; i < particleCount; i++)
-            mPositions[i] = Dynamics.Integrate(mPositions[i], mVelocities[i], dt);
-
-        // 2. Correct motion & position
-        List<Manifold> collisions = Collision.Collisions(mPositions, mColliders);
-        Dynamics.ResolveVelocities(mVelocities, mInvMasses, mFrictions, mRestitutions, collisions);
-        Dynamics.ResolvePositions(mPositions, mColliders, collisions);
+        List<Manifold> collisions = Collision.Collisions(physicsObjects);
+        foreach (Manifold collision in collisions)
+        {
+            Dynamics.ResolveVelocity(collision);
+            Dynamics.ResolvePosition(collision);
+        }
     }
-
-    List<Vector3> mPositions = new List<Vector3>();
-    List<Vector3> mVelocities = new List<Vector3>();
-    List<Vector3> mAccelrations = new List<Vector3>();
-    List<Vector3> mNetForces = new List<Vector3>();
-
-    List<float> mInvMasses = new List<float>();
-    List<float> mGravityScales = new List<float>();
-    List<float> mFrictions = new List<float>();
-    List<float> mRestitutions = new List<float>();
-
-    List<Collider> mColliders = new List<Collider>();
 
     public static class Dynamics
     {
@@ -199,83 +117,81 @@ public class PhysicsWorld
             return value + change * dt;
         }
 
-        public static void ResolveVelocities(
-            List<Vector3> velocities, List<float> invMasses,
-            List<float> frictions, List<float> restitutions,
-            List<Manifold> collisions)
+        public static void ResolveVelocity(Manifold collision)
         {
-            foreach (Manifold collision in collisions)
-            {
-                // Exit if both objects are static
-                float invMassSum = invMasses[collision.a] + invMasses[collision.b];
-                if (invMassSum <= Mathf.Epsilon) continue;
+            PhysicsObject a = collision.a;
+            PhysicsObject b = collision.b;
+            // Exit if both objects are immovable
+            float invMassSum = a.invMass + b.invMass;
+            if (invMassSum <= Mathf.Epsilon) return;
 
-                // Exit if both objects are moving away from each other
-                Vector3 vBA = velocities[collision.a] - velocities[collision.b];
-                float t = Vector3.Dot(vBA, collision.mtv.normal);
-                if (t > 0.0f) continue;
+            // Exit if both objects are moving away from each other
+            Vector3 vBA = a.vel - b.vel;
+            float t = Vector3.Dot(vBA, collision.mtv.normal);
+            if (t > 0.0f) return;
 
-                // Apply impulse to velocities
-                float restitution = Mathf.Min(restitutions[collision.a], restitutions[collision.b]);
-                float impulseMagnitude = -(1.0f + restitution) * t / invMassSum;
-                Vector3 impulse = collision.mtv.normal * impulseMagnitude;
-                velocities[collision.a] += impulse * invMasses[collision.a];
-                velocities[collision.b] -= impulse * invMasses[collision.b];
+            // Apply impulse to velocities
+            float restitution = Mathf.Min(a.restitution, b.restitution);
+            float impulseMagnitude = -(1.0f + restitution) * t / invMassSum;
+            Vector3 impulse = collision.mtv.normal * impulseMagnitude;
+            a.vel += impulse * a.invMass;
+            b.vel -= impulse * b.invMass;
 
-                // Scale friction based on how similar the relative velocity is to the collision normal
-                Vector3 frictionDirection = (vBA - (collision.mtv.normal * t)).normalized;
-                float frictionMagnitude = -Vector3.Dot(vBA, frictionDirection) / invMassSum;
+            // Scale friction based on how similar the relative velocity is to the collision normal
+            Vector3 frictionDirection = (vBA - (collision.mtv.normal * t)).normalized;
+            float frictionMagnitude = -Vector3.Dot(vBA, frictionDirection) / invMassSum;
 
-                // Coulomb's Law
-                float mu = Mathf.Sqrt(frictions[collision.a] * frictions[collision.b]);
-                frictionMagnitude = Mathf.Clamp(frictionMagnitude,
-                    -impulseMagnitude * mu, impulseMagnitude * mu);
+            // Coulomb's Law
+            float mu = Mathf.Sqrt(a.friction * b.friction);
+            frictionMagnitude = Mathf.Clamp(frictionMagnitude,
+                -impulseMagnitude * mu, impulseMagnitude * mu);
 
-                // Apply friction to velocities
-                Vector3 friction = frictionMagnitude * frictionDirection;
-                velocities[collision.a] += friction * invMasses[collision.a];
-                velocities[collision.b] -= friction * invMasses[collision.b];
-            }
+            // Apply friction to velocities
+            Vector3 friction = frictionMagnitude * frictionDirection;
+            a.vel += friction * a.invMass;
+            b.vel -= friction * b.invMass;
         }
 
-        public static void ResolvePositions(List<Vector3> positions, List<Collider> colliders,
-            List<Manifold> collisions)
+        public static void ResolvePosition(Manifold collision)
         {
-            foreach (Manifold collision in collisions)
+            Vector3 mtv = collision.mtv.normal * collision.mtv.depth;
+            if (!collision.b.InfMass())
             {
-                Vector3 mtv = collision.mtv.normal * collision.mtv.depth;
-                if (colliders[collision.b].dynamic)
-                {
-                    positions[collision.a] += mtv * 0.5f;
-                    positions[collision.b] -= mtv * 0.5f;
-                }
-                else
-                {
-                    positions[collision.a] += mtv;
-                }
+                collision.a.pos += mtv * 0.5f;
+                collision.b.pos -= mtv * 0.5f;
+            }
+            else
+            {
+                collision.a.pos += mtv;
             }
         }
     }
 
     public static class Collision
     {
-        public static List<Manifold> Collisions(List<Vector3> positions, List<Collider> colliders)
+        public static List<Manifold> Collisions(PhysicsObject[] physicsObjects)
         {
             List<Manifold> collisions = new List<Manifold>();
-            for (int i = 0; i < positions.Count; i++)
+            for (int i = 0; i < physicsObjects.Length; i++)
             {
-                for (int j = i + 1; j < positions.Count; j++)
+                for (int j = i + 1; j < physicsObjects.Length; j++)
                 {
                     Mtv mtv = new Mtv();
-                    if (Check(positions[i], colliders[i], positions[j], colliders[j], mtv))
+                    if (Check(
+                        physicsObjects[i].pos, physicsObjects[i].collider,
+                        physicsObjects[j].pos, physicsObjects[j].collider, mtv))
                     {
-                        if (!colliders[i].dynamic && colliders[j].dynamic)
+                        // Ensure A is always moveable. Flip mtv if A and B are swapped.
+                        if (physicsObjects[i].InfMass() && !physicsObjects[j].InfMass())
                         {
                             mtv.normal *= -1.0f;
-                            collisions.Add(new Manifold() { a = j, b = i, mtv = mtv });
+                            collisions.Add(new Manifold() { a = physicsObjects[j], b = physicsObjects[i], mtv = mtv });
                         }
                         else
-                            collisions.Add(new Manifold() { a = i, b = j, mtv = mtv });
+                            collisions.Add(new Manifold() { a = physicsObjects[i], b = physicsObjects[j], mtv = mtv });
+                        // Flipping mtv based on dot-product only works if objects don't tunnel
+                        // (ie if 60% of a sphere is inside a plane, then the above logic would flip the normal the wrong way)
+                        // Continuous collision detection would fix this, although I'm pretty sure this isn't actually broken!
                     }
                 }
             }
