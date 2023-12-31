@@ -1,5 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
+using System;
 using UnityEngine;
 
 public enum Shape
@@ -8,6 +7,7 @@ public enum Shape
     PLANE
 }
 
+[Serializable]
 public class Collider
 {
     public Shape shape;     // SPHERE or PLANE
@@ -19,18 +19,25 @@ public class Collider
 public class PhysicsObject : MonoBehaviour
 {
     // Motion
-    public Vector3 pos = Vector3.zero;
-    public Vector3 vel = Vector3.zero;
-    public Vector3 acc = Vector3.zero;
-    public Vector3 fNet = Vector3.zero;
+    public Vector3 pos;
+    public Vector3 vel;
+    public Vector3 acc;
+    public Vector3 force;
 
     // Properties
-    public float gravityScale = 1.0f;
-    public float invMass = 1.0f;
-    public float friction = 0.0f;
-    public float restitution = 1.0f;
-    public bool InfMass() { return invMass > Mathf.Epsilon; }
+    public float gravityScale;
+    public float invMass;
+    public float friction;
+    public float restitution;
+    public bool InfMass() { return invMass <= Mathf.Epsilon; }
+    public void SetMass(float mass) { invMass = mass <= Mathf.Epsilon ? 0.0f : 1.0f / invMass; }
 
     // Collision
-    public Collider collider = null;
+    public Collider collider;
+
+    private void Awake()
+    {
+        // Interpret value in inspector as mass (not inverse-mass).
+        SetMass(invMass);
+    }
 }

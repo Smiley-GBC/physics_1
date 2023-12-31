@@ -24,18 +24,19 @@ public class PhysicsWorld
 
     List<GameObject> objects = new List<GameObject>();
 
-    void Add(GameObject obj)
+    public void Add(GameObject obj)
     {
+        obj.transform.position = obj.GetComponent<PhysicsObject>().pos;
         objects.Add(obj);
     }
 
-    void Remove(GameObject obj)
+    public void Remove(GameObject obj)
     {
         objects.Remove(obj);
         Object.Destroy(obj);
     }
 
-    void Clear()
+    public void Clear()
     {
         foreach (GameObject obj in objects)
             Object.Destroy(obj);
@@ -47,8 +48,25 @@ public class PhysicsWorld
     // maintaining some nonsensical Physics-to-GameObject data-structure...
     public void Update(float dt)
     {
-        // Fetch physics components and step physics simulation
         PhysicsObject[] physicsObjects = Object.FindObjectsOfType<PhysicsObject>();
+
+        // Write from Unity to physics engine
+        foreach (PhysicsObject obj in physicsObjects)
+        {
+            obj.pos = obj.transform.position;
+            switch (obj.collider.shape)
+            {
+                case Shape.SPHERE:
+                    obj.collider.radius = obj.transform.localScale.x * 0.5f;
+                    break;
+
+                case Shape.PLANE:
+                    obj.collider.normal = obj.transform.up;
+                    break;
+            }
+        }
+
+        // Step physics simulation
         while (prevTime < currTime)
         {
             prevTime += timestep;
@@ -56,7 +74,7 @@ public class PhysicsWorld
         }
         currTime += dt;
 
-        // Determine collisions
+        // Determine collisions (for rendering only)
         List<bool> collisions = new List<bool>(new bool[physicsObjects.Length]);
         for (int i = 0; i < physicsObjects.Length; i++)
         {
@@ -68,14 +86,12 @@ public class PhysicsWorld
             }
         }
 
-        // Write back positions & normals to/from game objects and render red/green for collision vs no collision
+        // Write from physics engine to Unity
         for (int i = 0; i < physicsObjects.Length; i++)
         {
             PhysicsObject obj = physicsObjects[i];
-            obj.gameObject.GetComponent<Renderer>().material.color = collisions[i] ? Color.red : Color.green;
             obj.transform.position = obj.pos;
-            if (obj.collider.shape == Shape.PLANE)
-                obj.collider.normal = obj.transform.up;
+            obj.gameObject.GetComponent<Renderer>().material.color = collisions[i] ? Color.red : Color.green;
         }
     }
 
@@ -83,9 +99,9 @@ public class PhysicsWorld
     {
         foreach (PhysicsObject obj in physicsObjects)
         {
-            obj.acc = obj.fNet * obj.invMass;       // Fa
+            obj.acc = obj.force * obj.invMass;      // Fa
             obj.acc += gravity * obj.gravityScale;  // Fg
-            obj.fNet = Vector3.zero;
+            obj.force = Vector3.zero;
 
             obj.vel = Dynamics.Integrate(obj.vel, obj.acc, dt);
             obj.pos = Dynamics.Integrate(obj.pos, obj.vel, dt);
