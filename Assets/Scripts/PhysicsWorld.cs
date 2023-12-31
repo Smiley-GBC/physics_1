@@ -18,7 +18,7 @@ public class Manifold
 public class PhysicsWorld
 {
     Vector3 gravity = new Vector3(0.0f, -9.81f, 0.0f);
-    float timestep = 1.0f / 50.0f;
+    float timestep = 1.0f / 250.0f;
     float prevTime = 0.0f;
     float currTime = 0.0f;
 

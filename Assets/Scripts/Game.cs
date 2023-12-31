@@ -17,23 +17,24 @@ public class Game : MonoBehaviour
         {
             GameObject sphereGO = Instantiate(spherePrefab);
             PhysicsObject sphere = sphereGO.GetComponent<PhysicsObject>();
-            sphere.pos = new Vector3(-1.0f, 1.0f, 0.0f);
-            sphere.vel = new Vector3(-1.0f, 0.0f, 0.0f);
-            sphere.friction = 0.01f;
-            sphere.restitution = 0.75f;
+            sphere.pos = new Vector3(0.0f, 1.0f, 0.0f);
+            //sphere.pos = new Vector3(-1.0f, 1.0f, 0.0f);
+            //sphere.vel = new Vector3(-1.0f, 0.0f, 0.0f);
+            //sphere.friction = 0.01f;
+            //sphere.restitution = 0.75f;
             world.Add(sphereGO);
         }
 
         // Left sphere moving right that will quickly stop bouncing and come to rest
-        {
-            GameObject sphereGO = Instantiate(spherePrefab);
-            PhysicsObject sphere = sphereGO.GetComponent<PhysicsObject>();
-            sphere.pos = new Vector3(-3.0f, 1.0f, 0.0f);
-            sphere.vel = new Vector3( 3.0f, 0.0f, 0.0f);
-            sphere.friction = 0.01f;
-            sphere.restitution = 0.75f;
-            world.Add(sphereGO);
-        }
+        //{
+        //    GameObject sphereGO = Instantiate(spherePrefab);
+        //    PhysicsObject sphere = sphereGO.GetComponent<PhysicsObject>();
+        //    sphere.pos = new Vector3(-3.0f, 1.0f, 0.0f);
+        //    sphere.vel = new Vector3( 3.0f, 0.0f, 0.0f);
+        //    sphere.friction = 0.01f;
+        //    sphere.restitution = 0.75f;
+        //    world.Add(sphereGO);
+        //}
     }
 
     // Late update to ensure external changes are made before stepping the physics simulation
