@@ -199,15 +199,15 @@ public class PhysicsWorld
                     {
                         // Ensure A is always moveable. Flip mtv if A and B are swapped.
                         if (physicsObjects[i].InfMass() && !physicsObjects[j].InfMass())
-                        {
-                            mtv.normal *= -1.0f;
                             collisions.Add(new Manifold() { a = physicsObjects[j], b = physicsObjects[i], mtv = mtv });
-                        }
                         else
                             collisions.Add(new Manifold() { a = physicsObjects[i], b = physicsObjects[j], mtv = mtv });
-                        // Flipping mtv based on dot-product only works if objects don't tunnel
-                        // (ie if 60% of a sphere is inside a plane, then the above logic would flip the normal the wrong way)
-                        // Continuous collision detection would fix this, although I'm pretty sure this isn't actually broken!
+                        
+                        // Don't over-think the infinite mass case.
+                        // Infinite mass spheres generally glitch out cause it produces crazy impulse.
+                        // Plus there's not much use for an infinitely heavy moving sphere. Just make it like 1000kg...
+                        // As for planes, the normal points out of the plane so it should remain unchanged.
+                        // TLDR the dot-product negation does more harm than good. Even if mtv is pointing the "wrong" way
                     }
                 }
             }
@@ -224,7 +224,7 @@ public class PhysicsWorld
                 return SpherePlane(position1, collider1.radius, position2, collider2.normal, mtv);
 
             if (collider1.shape == Shape.PLANE && collider2.shape == Shape.SPHERE)
-                return SpherePlane(position2, collider2.radius, position1, collider2.normal, mtv);
+                return SpherePlane(position2, collider2.radius, position1, collider1.normal, mtv);
 
             return false;
         }

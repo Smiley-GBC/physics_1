@@ -30,7 +30,7 @@ public class PhysicsObject : MonoBehaviour
     public float friction;
     public float restitution;
     public bool InfMass() { return invMass <= Mathf.Epsilon; }
-    public void SetMass(float mass) { invMass = mass <= Mathf.Epsilon ? 0.0f : 1.0f / invMass; }
+    public void SetMass(float mass) { invMass = mass <= Mathf.Epsilon ? 0.0f : 1.0f / mass; }
 
     // Collision
     public Collider collider;
